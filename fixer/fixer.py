@@ -1,4 +1,8 @@
+import yaml
+import glob
 import sys
+
+from optparse import OptionParser
 from pwn import *
 
 def p9(v):
@@ -33,25 +37,65 @@ def bra(imm):
 def smp(rega, regb, prot):
     return endi('1010010' + regid(rega) + regid(regb) + '1' + bin(prot)[2:].rjust(2, '0') + '0' * 7)
 
-patchbits = endi('101000000011000000')
 oribitlen = 0x12
 
-with open(sys.argv[1], 'rb') as infile:
-    indata = infile.read()
-    bits = ''.join(bin(ord(d))[2:].rjust(8, '0') for d in indata)
+parser = OptionParser(usage="usage: %prog --dir DIR --bin BIN")
+parser.add_option("-b", "--bin", dest="bin",
+                  help="firmware file name", metavar="BIN")
+parser.add_option("-d", "--dir", dest="dir", default='.', metavar="DIR",
+                  help="directory includes patch files (see sample/)")
+parser.add_option("-o", "--output", metavar="FILE", dest="output", help="output filename, default is <bin>.patch")
+(options, args) = parser.parse_args()
+
+def collect_patches(dir):
+    files = glob.glob(os.path.join(dir, '*.yml'))
+    assert len(files) > 0
+    patches = []
+    for file in files:
+        config = yaml.safe_load(open(file, 'rb').read())
+        assert config['start'] != None
+        if config.get('bits'):
+            bits = config['bits']
+        elif config.get('asmfile'):
+            # TODO
+            raise
+        else:
+            raise 'Either "bitstring" or "asmfile" should present'
+        patches.append({'start': config['start'], 'bits': bits})
+    return patches
+    
+# return bit stream
+def load_bin(file):
+    with open(file, 'rb') as infile:
+        indata = infile.read()
+    return ''.join(bin(ord(d))[2:].rjust(8, '0') for d in indata)
+
+def do_patch(bits, patches):
+    # TODO: consider multiple patches
+    patchbits = patches[0]['bits']
+    st = patches[0]['start']
+
     bits = bits + '0' * (1024 * 9 - (len(bits) % (1024 * 9)))
     offset = len(bits) / 9
     bits += patchbits
     patchend = len(bits) / 9
-    bits += ml(0, 0) + ml(1, 0) + bits[0:oribitlen * 9] + bra(oribitlen)
-    assert len(bits) < 1024 * 9
+    bits += ml(0, 0) + ml(1, 0) + bits[st:st + oribitlen * 9] + bra(oribitlen)
+    assert len(patchbits) < 1024 * 9
 
     payload = ml(0, offset & ((1<<17) - 1)) + mh(0, (offset>>10)) + ml(1, 1) + smp(0, 1, 3) + bra(patchend)
     assert oribitlen * 9 >= len(payload)
 
     # Assume old code is PIE
     bits = bytearray(bits)
-    bits[0:len(payload)] = payload
+    bits[st:st+len(payload)] = payload
     bits = bytes(bits)
     assert len(bits) % 9 == 0
-    open(sys.argv[1] + '.patch', 'wb').write(''.join(chr(int(x, 2)) for x in group(8, bits, 'fill', '0')))
+    return bits
+
+patches = collect_patches(options.dir)
+bits = load_bin(options.bin)
+patched_bits = do_patch(bits, patches)
+
+output = options.output or (options.bin + '.patch')
+
+open(output, 'wb').write(''.join(chr(int(x, 2)) for x in group(8, patched_bits, 'fill', '0')))
