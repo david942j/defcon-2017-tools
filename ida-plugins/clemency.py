@@ -74,32 +74,24 @@ class CLEMENCY(processor_t):
         "a_sizeof_fmt": "size %s",
     }
 
-    reg_names = regNames = ["R%02d" % (i) for i in xrange(32)] + ["CS", "DS"]
-
     def __init__(self):
         processor_t.__init__(self)
         self._init_registers()
 
     def _init_registers(self):
-        self.reg_ids = {}
-        for i, reg in enumerate(self.reg_names):
-            self.reg_ids[reg] = i
-        self.regFirstSreg = self.regCodeSreg = self.reg_ids["CS"]
-        self.regLastSreg = self.regDataSreg = self.reg_ids["DS"]
 
-    def reorder(self, v):
-        return struct.unpack(">H",struct.pack("<H", v))[0]
+        # Registers definition
+        self.regNames = ["R%d" % (i) for i in xrange(29)] + ["ST", "RA", "PC", "FL"] + ["CS", "DS"]
+
+        # Create the ireg_XXXX constants
+        for i in xrange(len(self.regNames)):
+            setattr(self, 'ireg_' + self.regNames[i], i)
+
+        # Set fake segment registers
+        self.regFirstSreg = self.regCodeSreg = self.ireg_CS
+        self.regLastSreg = self.regDataSreg = self.ireg_DS
 
     def ana(self):
-        cmd = self.cmd
-        ea = cmd.ea + cmd.size
-        cmd.size += 2
-        ins = get_full_byte(ea)
-        print bin(ins)
-        ins = get_full_byte(ea+1)
-        print bin(ins)
-        ins = get_full_byte(ea+2)
-        print bin(ins)
         return 0
 
     def emu(self):
