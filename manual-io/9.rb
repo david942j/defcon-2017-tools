@@ -4,7 +4,7 @@ require 'shellwords'
 
 def to9(xs)
   s = xs.map{|x| '%09b' % x}.join
-  s += '0' * (8 - s.size % 8) if s % 8 != 0
+  s += '0' * (8 - s.size % 8) if s.size % 8 != 0
   [s].pack('B*')
 end
 
