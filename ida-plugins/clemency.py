@@ -1,4 +1,10 @@
 from idaapi import *
+import os
+import sys
+
+def ana(self):
+    print 'ohya'
+    return 0
 
 class CLEMENCY(processor_t):
     # IDP id ( Numbers above 0x8000 are reserved for the third-party modules)
@@ -74,6 +80,8 @@ class CLEMENCY(processor_t):
         "a_sizeof_fmt": "size %s",
     }
 
+
+    module = __import__('clemency')
     def __init__(self):
         processor_t.__init__(self)
         self._init_registers()
@@ -92,7 +100,9 @@ class CLEMENCY(processor_t):
         self.regLastSreg = self.regDataSreg = self.ireg_DS
 
     def ana(self):
-        return 0
+        reload(self.module)
+        dynana = getattr(self.module, 'ana')
+        return dynana(self)
 
     def emu(self):
         return True
@@ -104,4 +114,8 @@ class CLEMENCY(processor_t):
         return True
 
 def PROCESSOR_ENTRY():
+    # add proc into module path
+    script_path = os.path.abspath(__file__)
+    script_dir = os.path.dirname(script_path)
+    sys.path.insert(0, script_dir)
     return CLEMENCY()
