@@ -2,6 +2,9 @@ from idaapi import *
 import os
 import sys
 
+########################################
+# Processor Type
+########################################
 def ana(self):
     print 'ohya'
     return 0
@@ -113,7 +116,46 @@ class CLEMENCY(processor_t):
     def outop(self, op):
         return True
 
+########################################
+# Data format for TriBytes (9bits)
+########################################
+class tribyte_data_type(data_type_t):
+    ASM_KEYWORD = ".tri"
+    def __init__(self):
+        data_type_t.__init__(self,
+                             name = "py_tribyte",
+                             hotkey = 'z',
+                             value_size = 1,
+                             menu_name = "TriBytes (9bits)",
+                             asm_keyword = tribyte_data_type.ASM_KEYWORD)
+
+    def calc_item_size(self, ea, maxsize):
+        return 3
+
+class tribyte_data_format(data_format_t):
+    def __init__(self):
+        data_format_t.__init__(self,
+                               name = "py_tribyte_format",
+                               menu_name = "TriBytes (9bits)")
+
+    def printf(self, value, current_ea, operand_num, dtid):
+        b1 = idaapi.get_full_byte(current_ea) & 0x1ff
+        b2 = idaapi.get_full_byte(current_ea+1) & 0x1ff
+        b3 = idaapi.get_full_byte(current_ea+2) & 0x1ff
+        return hex((b2 << 18) + (b1 << 9) + b3)
+
+def init_data_format():
+    new_format = [
+            (tribyte_data_type(), tribyte_data_format())
+            ]
+    register_data_types_and_formats(new_format)
+
+########################################
+# Processor Plugin Entry
+########################################
 def PROCESSOR_ENTRY():
+    # new data format
+    init_data_format()
     # add proc into module path
     script_path = os.path.abspath(__file__)
     script_dir = os.path.dirname(script_path)
