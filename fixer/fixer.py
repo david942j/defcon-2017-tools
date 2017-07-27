@@ -60,7 +60,7 @@ def collect_patches(dir):
             # TODO
             raise
         else:
-            raise 'Either "bitstring" or "asmfile" should present'
+            raise 'Either "bits" or "asmfile" should present'
         patches.append({'start': config['start'], 'bits': bits})
     return patches
     
@@ -71,6 +71,12 @@ def load_bin(file):
     return ''.join(bin(ord(d))[2:].rjust(8, '0') for d in indata)
 
 def do_patch(bits, patches):
+    '''
+    1. patch entry point (0x0) to extend whole binary size (additional page in the end)
+        * therefore, DO NOT patch bin[0:0x12]
+    2. collect and append patches to the additional page
+    3. hook each `start'  to jmp to correspond address
+    '''
     # TODO: consider multiple patches
     patchbits = patches[0]['bits']
     st = patches[0]['start']
