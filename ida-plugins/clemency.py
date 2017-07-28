@@ -119,6 +119,23 @@ def ana(self):
     if idx is None:
         return 0
     ana_ops(self, map(lambda x: (code2 & x[0]) >> x[1], ops))
+
+
+    if cmd.itype == self.itype_MH and cmd.ea >= 3:
+        code_bit = ''
+        last_ea = cmd.ea - 3
+        code_bit = '{:09b}{:09b}{:09b}'.format(get_full_byte(last_ea+1) & 0x1ff, get_full_byte(last_ea) & 0x1ff, get_full_byte(last_ea+2) & 0x1ff)
+        code = int(code_bit, 2)
+        if (code >> 22) & 0x1f == 0x12:
+            regidx = (code >> 17) & 0x1f
+            lo = code & 0x1ffff
+
+            if regidx == cmd[0].reg:
+                hi = cmd[1].value
+                v = (hi << 10) | (lo & 0x3ff)
+                cmd[1].value = v
+                cmd.itype = self.itype_MEH
+
     bytelen = bitlen // 9
     cmd.size += bytelen
     return bytelen
@@ -399,6 +416,10 @@ class CLEMENCY(processor_t):
                 d['cmt'] = x.cmt
             Instructions.append(d)
             setattr(self, 'itype_' + x.name, j)
+
+        d = dict(name = 'meh', feature=0)
+        setattr(self, 'itype_MEH', len(Instructions))
+        Instructions.append(d)
 
         self.instruc_end = len(Instructions) + 1
         self.instruc = Instructions
