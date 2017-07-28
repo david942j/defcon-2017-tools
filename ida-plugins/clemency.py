@@ -384,7 +384,7 @@ class CLEMENCY(processor_t):
 
         # Update Flag
         #   e.g., ad.
-        if self.cmd.auxpref & self.FL_UF == 1:
+        if self.cmd.auxpref & self.FL_UF != 0:
             postfix += '.'
 
         OutMnem(12, postfix)
