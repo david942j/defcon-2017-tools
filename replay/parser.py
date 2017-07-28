@@ -48,12 +48,16 @@ def parse(fname):
         os.mkdir('stream')
     for prob_id,arr in streams.iteritems():
         path = os.path.join('stream', prob_id)
+        path2 = os.path.join('json', 'todo')
         if not os.path.exists(path):
             os.mkdir(path)
         for res in arr:
             md5 = hashlib.md5(json.dumps(res)).hexdigest()
             fname = os.path.join(path, md5 + '.json')
             print 'Save Packet Stream:',fname
+            f = file(fname, 'w')
+            json.dump(res, f)
+            fname = os.path.join(path2, md5 + '.json')
             f = file(fname, 'w')
             json.dump(res, f)
 

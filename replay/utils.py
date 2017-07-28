@@ -2,30 +2,15 @@ import json
 import sys,os
 from pwn import *
 import subprocess
+from shutil import move
 from multiprocessing import *
 
-if len(sys.argv)<3: 
-    print 'Usage: %s binary problem_prot' %sys.argv[0]
-    exit(1)
+def tcheck(arg):
+    name,binary,in_dir,out_dir = arg
 
-binary = sys.argv[1]
-port = sys.argv[2]
-dirname = 'stream/'+str(port)
-
-if not os.path.exists(os.path.join('bin', binary)):
-    print 'Binary bin/%s not exists' % binary
-    exit(1)
-
-if not os.path.exists(dirname):
-    print 'Dir %s not exists' % dirname
-    exit(1)
-
-def check(name):
     proc = current_process()
-    print proc.name
-    print name
     n = int(proc.name[len('PoolWorker-'):])+8888
-    res = json.load(open(dirname+'/'+name))
+    res = json.load(open(in_dir+'/'+name))
     payloads = []
     response = []
     for r in res:
@@ -55,15 +40,33 @@ def check(name):
         for i in range(1000):
             s = '4010%0x' % i
             if s in out:
-                print 'Find %s' % s
+                #print 'Find %s' % s
                 flag = True
                 break
         if flag:
-            print 'leak flag'
+            move(in_dir+'/'+name,out_dir+'/touch_flag')
         else:
-            print 'crash'
+            move(in_dir+'/'+name,out_dir+'/exception')
     else:
-        print 'ok'
+        move(in_dir+'/'+name,out_dir+'/ok')
 
-p = Pool(2)
-p.map(check,os.listdir(dirname))
+def check(binary,in_dirname,out_dirname):
+    """
+    if len(sys.argv)<3: 
+        print 'Usage: %s binary problem_port' %sys.argv[0]
+        exit(1)
+    """
+    #binary = sys.argv[1]
+    #port = sys.argv[2]
+    #dirname = 'stream/'+str(port)
+
+    if not os.path.exists(os.path.join('bin', binary)):
+        print 'Binary bin/%s not exists' % binary
+        exit(1)
+
+    if not os.path.exists(in_dirname):
+        print 'Dir %s not exists' % in_dirname
+        exit(1)
+
+    p = Pool(10)
+    p.map(tcheck,[(f,binary,in_dirname,out_dirname) for f in os.listdir(in_dirname)])
