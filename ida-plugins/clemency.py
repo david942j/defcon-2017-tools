@@ -1,15 +1,73 @@
 from idaapi import *
 import os
 import sys
+import re
 from clemency_inst import inst_json
+########################################
+# Decoder Function
+########################################
+def is_bit_string(strg, search=re.compile(r'[^01]').search):
+    return not bool(search(strg))
+
+def fetch(code, n):
+    byte1 = (code >> (54 - 9 * 1)) & 0x1ff
+    byte2 = (code >> (54 - 9 * 2)) & 0x1ff
+    byte3 = (code >> (54 - 9 * 3)) & 0x1ff
+    byte4 = (code >> (54 - 9 * 4)) & 0x1ff
+    byte5 = (code >> (54 - 9 * 5)) & 0x1ff
+    byte6 = (code >> (54 - 9 * 6)) & 0x1ff
+
+    v = 0
+    if n == 3:
+        v = (byte2 << 18) + (byte1 << 9) + byte3
+    return v
+
+def match_inst(opbit, inst):
+    off = 0
+    for e in inst[1:]:
+        # do match
+        if is_bit_string(e[1]):
+            if opbit[off:off+e[0]] != e[1]:
+                return 0
+        off += e[0]
+    return 1
+
+def decoder755127(self, code):
+    inst_len = 3
+    opcode = fetch(code, inst_len)
+    opbit = "{:0{width}b}".format(opcode, width=9*inst_len)
+    inst_table = [
+            ['SMP', (7, '1010010'), (5, 'rA'), (5, 'rB'), (1, '1'), (2, 'Memory Flags'), (7, '0000000')],
+            ]
+
+    for inst in inst_table:
+        m = match_inst(opbit, inst)
+        if m > 0:
+            self.cmd.itype = getattr(self, 'itype_' + inst[0])
+            return inst_len
+    return 0
 
 ########################################
 # Processor Type
 ########################################
 def ana(self):
-    print len(self.itable)
-    print 'ohya'
-    return 0
+    cmd = self.cmd
+    current_ea = cmd.ea + cmd.size
+    code_bit = ''
+    for i in xrange(6):
+        code_bit += '{:09b}'.format(get_full_byte(current_ea + i) & 0x1ff)
+    code = int(code_bit, 2)
+
+    decoder_list = [
+            decoder755127,
+            ]
+    r = 0
+    for d in decoder_list:
+        r = d(self, code)
+        if r > 0:
+            break
+    cmd.size += r
+    return r
 
 class CLEMENCY(processor_t):
     # IDP id ( Numbers above 0x8000 are reserved for the third-party modules)
@@ -132,12 +190,19 @@ class CLEMENCY(processor_t):
         return dynana(self)
 
     def emu(self):
+        print "emu"
         return True
 
     def out(self):
-        return True
+        print "out"
+        buf = idaapi.init_output_buffer(1024)
+        OutMnem(12)
+        term_output_buffer()
+        cvar.gl_comm = 1
+        MakeLine(buf)
 
     def outop(self, op):
+        print "outop"
         return True
 
 ########################################
