@@ -14,12 +14,15 @@ class PcapParser(object):
         pcap = rdpcap(filename)
         s = pcap.sessions()
         for k, v in s.iteritems():
-            if v[0].ack == 0:
-                h[v[0].seq+1].append(v)
-            else:
+            v = sorted(v, key=lambda x: x.time)
+            print v[0].ack,v[0].seq
+            h[v[0].seq+1].append(v)
+            if v[0].ack != 0:
                 h[v[0].ack].append(v)
         res = []
         for v in h.values():
+            if len(v) != 2:
+                continue
             d = [ (0, x) for x in v[0] ]
             d += [ (1, x) for x in v[1] ]
             d = sorted(d, key=lambda x: x[1].time)
@@ -30,7 +33,10 @@ class PcapParser(object):
         return self.data
 
 if __name__ == '__main__':
-    streams = PcapParser('hello.pcap').get_streams()
+    fname = 'hello.pcap'
+    if len(sys.argv) >= 2:
+        fname = sys.argv[1]
+    streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
     for i in streams:
