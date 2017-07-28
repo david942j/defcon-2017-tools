@@ -26,6 +26,19 @@ def fetch(code, n):
     elif n == 54:
         return (byte2 << 45) + (byte1 << 36) + (byte3 << 27) + (byte5 << 18) + (byte4 << 9) + byte6
 
+def calc_jump_addr(self, op):
+    addr = op.addr
+    if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
+        if self.cmd.itype == self.itype_C or self.cmd.itype == self.itype_B:
+            if addr & 0x10000 != 0:
+                # sign extend
+                addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
+            else:
+                addr = addr + self.cmd.ea
+        else:
+            addr = (addr + self.cmd.ea) & 0x7ffffff
+    return addr
+
 
 ########################################
 # Processor Type
@@ -101,7 +114,23 @@ def ana(self):
     return bytelen
 
 def emu(self):
-    ua_add_cref(0, self.cmd.ea + self.cmd.size, fl_F)
+    cmd = self.cmd
+    aux = self.get_auxpref()
+
+    if cmd.itype in [self.itype_B, self.itype_BR, self.itype_BRA, self.itype_BRR]:
+        if cmd.itype != self.itype_BR:
+            ua_add_cref(0, calc_jump_addr(self, cmd.Op1), fl_JN)
+        if cmd.itype not in [self.itype_B, self.itype_BR] or (aux & 0xF) != 0xF:
+            ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+    elif cmd.itype in [self.itype_C, self.itype_CR, self.itype_CAR, self.itype_CAA]:
+        if cmd.itype != self.itype_CR:
+            ua_add_cref(cmd.Op1.offb, calc_jump_addr(self, cmd.Op1), fl_CN)
+        ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+    elif cmd.itype in [self.itype_RE, self.itype_HT]:
+        pass
+    else:
+        ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+
     return True
 
 def outop(self, op):
