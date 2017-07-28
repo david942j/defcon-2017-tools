@@ -135,6 +135,7 @@ def get_vars(inst, line)
     fail "line #{$line_no}: RegCount must be positive" if cnt < 1
     var['Register Count'] = cnt - 1
     _, line = parse_literal(line, ']')
+    line.lstrip!
     fail "line #{$line_no}: trailing garbage #{line.inspect}" unless is_comment(line)
   else
     var['UF'], line = parse_uf(line) if inst['args'].any?{|x| x['value'] == 'UF'}
