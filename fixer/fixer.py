@@ -67,12 +67,10 @@ parser.add_option("-d", "--dir", dest="dir", default='.', metavar="DIR",
 parser.add_option("-o", "--output", metavar="FILE", dest="output", help="output filename, default is <bin>.patch")
 (options, args) = parser.parse_args()
 
-def collect_patches(dir):
-    files = glob.glob(os.path.join(dir, 'patches.yml'))
-    assert len(files) == 1
+def collect_patches(setting, dir):
     patches = []
-    file = files[0]
-    for config in yaml.safe_load(open(file, 'rb').read()).values():
+    for item in setting['targets']:
+        config = item.values()[0]
         assert config['start'] != None
         assert config['asmfile'] != None
         config['asmfile'] = os.path.join(dir, config['asmfile'])
@@ -102,6 +100,11 @@ def get_oribytelen(address, minlen):
 def get_first_inst_len(address):
     return get_oribytelen(address, 1)
 
+def do_inline(base_address, append_bits):
+    base_bddress = base_address * 9
+    bits[base_bddress:base_bddress + len(append_bits)] = append_bits
+    return bits
+
 def do_setup(base_address, append_bits, setup_address=0x3c, pages=1):
     '''
     We don't preserve R00 !!!!
@@ -111,7 +114,11 @@ def do_setup(base_address, append_bits, setup_address=0x3c, pages=1):
     3. hook each `start'  to jmp to correspond address
     '''
     global bits
+
     setup_bddress = setup_address * 9
+
+    # Align
+    bits = bits + '0' * (1024 * 9 - (len(bits) % (1024 * 9)))
 
     offset = len(bits) // 9
     oribytelen = get_oribytelen(setup_address, 0x11)
@@ -155,7 +162,6 @@ def gen_back(address, oribytelen):
     oribits = bytes(bits[bddress:bddress + oribytelen * 9])
     return oribits + bra(address + oribytelen)
 
-
 def cwd():
     return os.path.dirname(os.path.realpath(__file__))
 
@@ -197,17 +203,28 @@ def do_hooks(base_address, patches, patch_offsets):
         bddress = address * 9
         bits[bddress:bddress + 4 * 9] = bra(offset + base_address)
 
-patches = collect_patches(options.dir)
-bits = bytearray(load_bin(options.bin))
+def load_setting(dir):
+    files = glob.glob(os.path.join(dir, 'patches.yml'))
+    assert len(files) == 1
+    file = files[0]
+    return yaml.safe_load(open(file, 'rb').read())
 
-# Temp
-bits = bits + '0' * (1024 * 9 - (len(bits) % (1024 * 9)))
-base_address = 0x100000
+setting = load_setting(options.dir)
+patches = collect_patches(setting, options.dir)
+bits = bytearray(load_bin(options.bin))
+base_address = setting['base_address']
+
+mode = setting['mode']
 
 append_bits, patch_offsets = gen_patches(base_address, patches)
+
 do_hooks(base_address, patches, patch_offsets)
 
-patched_bits = bytes(do_setup(base_address, append_bits))
+if mode == 'append':
+    setup_address = setting['append']['setup_address']
+    patched_bits = bytes(do_setup(base_address, append_bits, setup_address))
+elif mode == 'inline':
+    patched_bits = bytes(do_inline(base_address, append_bits))
 
 output = options.output or (options.bin + '.patch')
 print('\nPatched file: ' + output)
