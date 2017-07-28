@@ -63,18 +63,19 @@ parser = OptionParser(usage="usage: %prog --dir DIR --bin BIN")
 parser.add_option("-b", "--bin", dest="bin",
                   help="firmware file name", metavar="BIN")
 parser.add_option("-d", "--dir", dest="dir", default='.', metavar="DIR",
-                  help="directory includes patch files (see sample/)")
+                  help="directory that includes patches.yml (see sample/)")
 parser.add_option("-o", "--output", metavar="FILE", dest="output", help="output filename, default is <bin>.patch")
 (options, args) = parser.parse_args()
 
 def collect_patches(dir):
-    files = glob.glob(os.path.join(dir, '*.yml'))
-    assert len(files) > 0
+    files = glob.glob(os.path.join(dir, 'patches.yml'))
+    assert len(files) == 1
     patches = []
-    for file in files:
-        config = yaml.safe_load(open(file, 'rb').read())
+    file = files[0]
+    for config in yaml.safe_load(open(file, 'rb').read()).values():
         assert config['start'] != None
         assert config['asmfile'] != None
+        config['asmfile'] = os.path.join(dir, config['asmfile'])
         patches.append(config)
     return patches
 
@@ -153,6 +154,10 @@ def gen_back(address, oribytelen):
     oribits = bytes(bits[bddress:bddress + oribytelen * 9])
     return oribits + bra(address + oribytelen)
 
+
+def cwd():
+    return os.path.dirname(os.path.realpath(__file__))
+
 def preprocess(asmname, back_address, skip_address):
     asmdata = open(asmname, 'r').read()
     asmdata = asmdata.replace('BACK', 'bra {}'.format(back_address))
@@ -162,7 +167,7 @@ def preprocess(asmname, back_address, skip_address):
     inf.flush()
     inf.seek(0)
     outf = tempfile.NamedTemporaryFile()
-    subprocess.check_output(['ruby', os.environ['TOOLDIR'] + '/assembler/asm.rb', inf.name, outf.name])
+    subprocess.check_output(['ruby', cwd() + '/../assembler/asm.rb', inf.name, outf.name])
     outf.seek(0)
     return load_bin(outf.name)
 

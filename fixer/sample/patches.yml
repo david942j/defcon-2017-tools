@@ -1,0 +1,11 @@
+skip: # patch exit(1)
+  start: 0x609b
+  asmfile: skip.asm
+
+easy: # alsmost do nothing
+  start: 0x901
+  asmfile: easy.asm
+
+print_flag: # just print flag
+  start: 0x6021
+  asmfile: print_flag.asm
