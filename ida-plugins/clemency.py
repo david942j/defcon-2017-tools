@@ -33,7 +33,6 @@ def fetch(code, n):
 
 def ana_ops(self, ops):
     inst = self.itable[self.cmd.itype]
-    print inst.name, inst.args
     opcnt = 0
     for w, v in inst.args:
         if v[0] == 'r':
@@ -67,7 +66,6 @@ def ana_ops(self, ops):
         else:
             continue
         opcnt += 1
-    print self.cmd
 
 def ana(self):
     cmd = self.cmd
@@ -100,12 +98,12 @@ def outop(self, op):
     elif optype == o_idpspec0:
         if op.value == 0:
             out_symbol('N')
-        elif op.value == 1:
+        elif op.spcval == 1:
             out_symbol('R')
-        elif op.value == 2:
+        elif op.spcval == 2:
             out_symbol('R')
             out_symbol('W')
-        elif op.value == 3:
+        elif op.spcval == 3:
             out_symbol('E')
         else:
             out_symbol('E')
@@ -117,7 +115,13 @@ def outop(self, op):
     elif optype == o_near:
         addr = op.addr
         if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
-            addr = addr + self.cmd.ea - self.cmd.size
+            addr = addr + self.cmd.ea
+        elif self.cmd.itype == self.itype_C or self.cmd.type == self.itype_B:
+            if addr & (1 << 16) == 1:
+                # sign extend
+                addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
+            else:
+                addr = addr + self.cmd.ea
 
         r = out_name_expr(op, addr, BADADDR)
         if not r:
@@ -291,7 +295,7 @@ class CLEMENCY(processor_t):
         return dynana(self)
 
     def emu(self):
-        print "emu"
+        ua_add_cref(0, self.cmd.ea + self.cmd.size, fl_F)
         return True
 
     cc_table = [
@@ -328,8 +332,6 @@ class CLEMENCY(processor_t):
         # Conditional
         #   e.g., Bge
         cc_idx = self.cmd.auxpref & self.FL_CC
-        print self.cmd.auxpref
-        print cc_idx
         if cc_idx != 0:
             idx = self.cmd.auxpref & self.FL_CC
             postfix += self.cc_table[idx]
