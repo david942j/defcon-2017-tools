@@ -234,7 +234,8 @@ MACROS = Hash[[
   Macro.new('pop') {|rA| "ldtd #{rA}, [ST, 1]"},
   Macro.new('rpop') {|rA| "ldti #{rA}, [ST, 1]"},
   Macro.new('mov') do |rA, imm|
-    bits = pack(27, imm.to_i(0))
+    imm = imm.to_i(0)
+    bits = pack(27, imm)
     l = bits[10, 17].to_i(2)
     h = bits[0, 17].to_i(2)
     ret = ["ml #{rA}, #{l}"]
