@@ -13,3 +13,8 @@ cLEMENCy IDA Plugin
 - Press `c` to makecode
 - Press `z` to convert bytes to tribytes data
 - Press `,` to convert bytes to tribytes string
+
+
+### Simplified Instructions
+
+- `ml rA, lo + mh rA, hi -> meh rA, (hi << 10) | (lo & 0x3ff)`
