@@ -19,10 +19,8 @@ class PcapParser(object):
     def _parse(self, filename):
         h = defaultdict(list)
         pcap = rdpcap(filename)
-        print pcap
         s = pcap.sessions()
         for k, v in s.iteritems():
-            print k,v
             v = sorted(v, key=lambda x: x.time)
             h[v[0].seq+1].append(v)
             if v[0].ack != 0:
@@ -65,28 +63,36 @@ def parse(fname):
     cwd = os.getcwd()+'/'
     d = {'1974':'prob1'}
     for prob_id,arr in streams.iteritems():
-        path = os.path.join('stream', prob_id)
-        path2 = os.path.join('json', 'todo')
-        path2 = os.path.join(d[prob_id], path2)
-        if not os.path.exists(path):
-            os.mkdir(path)
-        if not os.path.exists(path2):
-            os.mkdir(path2)
-        for res in arr:
-            data = concat_data(res)
-            md5 = hashlib.md5(data).hexdigest()
-            outfname = os.path.join(path, basename + '_' + md5 + '.json')
-            if os.path.exists(outfname):
-                continue
-            logging.info('Save Packet Stream: %s' % outfname)
-            f = file(outfname, 'w')
-            json.dump(res, f)
-            outfname2 = os.path.join(path2, basename + '_' + md5 + '.json')
-            outfname = cwd+outfname
-            outfname2 = cwd+outfname2
-            os.symlink(outfname,outfname2)
-            #f = file(fname, 'w')
-            #json.dump(res, f)
+        if prob_id not in d:
+            continue
+
+        try:
+            path = os.path.join('stream', prob_id)
+            path2 = os.path.join('json', 'todo')
+            path2 = os.path.join(d[prob_id], path2)
+
+            if not os.path.exists(path):
+                os.mkdir(path)
+            if not os.path.exists(path2):
+                os.mkdir(path2)
+            for res in arr:
+                data = concat_data(res)
+                md5 = hashlib.md5(data).hexdigest()
+                outfname = os.path.join(path, basename + '_' + md5 + '.json')
+                if os.path.exists(outfname):
+                    logging.info('Skip %s due to same' % md5)
+                    continue
+                logging.info('Save Packet Stream: %s' % outfname)
+                f = file(outfname, 'w')
+                json.dump(res, f)
+                outfname2 = os.path.join(path2, basename + '_' + md5 + '.json')
+                outfname = cwd+outfname
+                outfname2 = cwd+outfname2
+                os.symlink(outfname,outfname2)
+                #f = file(fname, 'w')
+                #json.dump(res, f)
+        except:
+            logging.warn('Error with %s' % prob_id)
 
 if __name__ == '__main__':
     try:
@@ -96,4 +102,4 @@ if __name__ == '__main__':
         logging.info('Parse %s' % sys.argv)
         parse(sys.argv[1])
     except:
-        logging.warn('Parse %s error' % sys.argv)
+        logging.error('Parse %s error' % sys.argv)
