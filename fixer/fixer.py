@@ -56,6 +56,9 @@ def sts(rega, regb, offset):
 def lds(rega, regb, offset):
     return endi('1010100' + regid(rega) + regid(regb) + '0' * 5 + '00' + bin(offset)[2:].rjust(27, '0') + '000')
 
+def dmt(rega, regb, regc):
+    return endi('0110100' + regid(rega) + regid(regb) + regid(regc) + '00000')
+
 def mov(rega, imm):
     return ml(rega, imm & ((1<<17) - 1)) + mh(rega, (imm>>10))
 
@@ -139,9 +142,9 @@ def do_setup(base_address, append_bits, setup_address=0x3c, pages=1):
     patchend = len(bits) // 9
 
     # Copy
-    bits += mov(20, base_address) + smp(20, 26, 2)
-    bits += ml(20, patchlen) + lds(21, 20, offset - 1) + sts(21, 20, base_address - 1) + sbi(20, 20, 1) + bn((-15) & ((1<<17) - 1))
-    bits += mov(20, base_address) + smp(20, 26, 3)
+    bits += mov(21, base_address) + smp(21, 26, 2)
+    bits += ml(20, patchlen) + mov(22, offset) + dmt(21, 22, 20)
+    bits += smp(21, 26, 3)
 
     # Jump second stage
     bits += bra(stage2_address)
