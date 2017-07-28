@@ -5,8 +5,8 @@ import subprocess
 from multiprocessing import *
 
 if len(sys.argv)<3: 
-    print 'GG'
-    exit(0)
+    print 'Usage: %s binary problem_prot' %sys.argv[0]
+    exit(1)
 
 binary = sys.argv[1]
 port = sys.argv[2]
