@@ -105,14 +105,14 @@ def outop(self, op):
     if optype == o_reg:
         out_register(self.regNames[op.reg])
     elif optype == o_idpspec0:
-        if op.value == 0:
+        if op.specval == 0:
             out_symbol('N')
-        elif op.spcval == 1:
+        elif op.specval == 1:
             out_symbol('R')
-        elif op.spcval == 2:
+        elif op.specval == 2:
             out_symbol('R')
             out_symbol('W')
-        elif op.spcval == 3:
+        elif op.specval == 3:
             out_symbol('E')
         else:
             out_symbol('E')
@@ -126,6 +126,7 @@ def outop(self, op):
         if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
             addr = addr + self.cmd.ea
         elif self.cmd.itype == self.itype_C or self.cmd.type == self.itype_B:
+            print addr
             if addr & (1 << 16) == 1:
                 # sign extend
                 addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
@@ -147,7 +148,7 @@ def outop(self, op):
         OutValue(op, OOF_ADDR)
         out_symbol(',')
         out_symbol(' ')
-        OutLine("%d" % op.specval)
+        OutLine("%d" % (op.specval + 1))
         out_symbol(']')
 
     return True
