@@ -156,22 +156,53 @@ def outop(self, op):
         OutValue(op, OOFW_IMM)
     elif optype == o_near:
         addr = op.addr
+        # offset
         if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
+            off = 0
             if self.cmd.itype == self.itype_C or self.cmd.itype == self.itype_B:
                 if addr & 0x10000 != 0:
                     # sign extend
+                    off = (~addr & 0x1ffff) + 1
                     addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
+                    out_symbol('-')
                 else:
+                    off = addr
                     addr = addr + self.cmd.ea
+                    out_symbol('+')
+            elif self.cmd.itype == self.itype_CAR or self.cmd.itype == self.itype_BRR:
+                if addr & 0x4000000 != 0:
+                    # sign extend
+                    off = (~addr & 0x7ffffff) + 1
+                    addr = self.cmd.ea - ((~addr & 0x7ffffff) + 1)
+                    out_symbol('-')
+                else:
+                    off = addr
+                    addr = addr + self.cmd.ea
+                    out_symbol('+')
             else:
+                off = addr
                 addr = (addr + self.cmd.ea) & 0x7ffffff
+                out_symbol('+')
 
-        r = out_name_expr(op, addr, BADADDR)
-        if not r:
-            out_tagon(COLOR_ERROR)
-            OutValue(op, OOF_ADDR)
-            out_tagoff(COLOR_ERROR)
-            QueueSet(Q_noName, self.cmd.ea)
+            OutLong(off, 16)
+
+            out_symbol(' ')
+            out_symbol('(')
+            r = out_name_expr(op, addr, BADADDR)
+            if not r:
+                out_tagon(COLOR_ERROR)
+                OutValue(op, OOF_ADDR)
+                out_tagoff(COLOR_ERROR)
+                QueueSet(Q_noName, self.cmd.ea)
+            out_symbol(')')
+        # location
+        else:
+            r = out_name_expr(op, addr, BADADDR)
+            if not r:
+                out_tagon(COLOR_ERROR)
+                OutValue(op, OOF_ADDR)
+                out_tagoff(COLOR_ERROR)
+                QueueSet(Q_noName, self.cmd.ea)
     elif optype == o_displ:
         out_symbol('[')
         out_register(self.regNames[op.phrase])
@@ -369,9 +400,9 @@ class CLEMENCY(processor_t):
         #   e.g., LDSI, LDSD
         adjust_flag = self.cmd.auxpref & self.FL_ADJUST
         if adjust_flag == 1:
-            postfix += 'I'
+            postfix += 'i'
         elif adjust_flag == 2:
-            postfix += 'D'
+            postfix += 'd'
 
         # Conditional
         #   e.g., Bge
