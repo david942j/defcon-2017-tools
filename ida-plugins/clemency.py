@@ -234,7 +234,7 @@ class CLEMENCY(processor_t):
     def _init_registers(self):
 
         # Registers definition
-        self.regNames = ["R%d" % (i) for i in xrange(29)] + ["ST", "RA", "PC", "FL"] + ["CS", "DS"]
+        self.regNames = ["R%02d" % (i) for i in xrange(29)] + ["ST", "RA", "PC", "FL"] + ["CS", "DS"]
 
         # Create the ireg_XXXX constants
         for i in xrange(len(self.regNames)):
