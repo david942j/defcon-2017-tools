@@ -211,12 +211,44 @@ def build_data(s)
     .join
 end
 
+def inst_width(key)
+  inst = HANDLER[key]
+  fail "line #{$line_no}: unknown instruction #{key}" unless inst
+  inst['args'].map{|x| x['width']}.inject(:+)
+end
+
+class Macro
+  def initialize(name, &action)
+    @name = name
+    @action = action
+  end
+  attr_reader :name
+  def call(*args, &block)
+    @action.call(*args, &block)
+  end
+end
+
+MACROS = Hash[[
+  Macro.new('push') {|rA| "sttd #{rA}, [ST, 1]"},
+  Macro.new('rpush') {|rA| "stti #{rA}, [ST, 1]"},
+  Macro.new('pop') {|rA| "ldtd #{rA}, [ST, 1]"},
+  Macro.new('rpop') {|rA| "ldti #{rA}, [ST, 1]"},
+].map{|x| [x.name, x]}]
+
 def asm(s, start_line_no = 1)
   labels = {}
   pos = 0
-  s.each_line.with_index(start_line_no) do |line, no|
+
+  # expand macros
+  s = s.each_line.with_index(start_line_no).flat_map do |line, no|
+    next [[line, no]] if is_comment(line) || is_label(line) || is_data(line)
+    key, *args = line.split
+    next [[line, no]] unless MACROS.include?(key)
+    Array(MACROS[key].call(*args)).map{|l| [l, no]}
+  end
+
+  s.each do |line, no|
     $line_no = no
-    line = line.strip
     next if is_comment(line)
 
     if is_label(line)
@@ -232,17 +264,13 @@ def asm(s, start_line_no = 1)
     end
 
     key = line.split[0]
-    inst = HANDLER[key]
-    fail "line #{$line_no}: unknown instruction #{key}" unless inst
-    width = inst['args'].map{|x| x['width']}.inject(:+)
-    pos += width
+    pos += inst_width(key)
   end
 
   pos = 0
   code = []
-  s.each_line.with_index(start_line_no) do |line, no|
+  s.each do |line, no|
     $line_no = no
-    line = line.strip
     next if is_comment(line) || is_label(line)
 
     if is_data(line)
