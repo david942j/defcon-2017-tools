@@ -66,7 +66,7 @@ def dump(pcap, cid):
         log.debug('tcp conversion: %d' % count)
         for i in xrange(count):
             log.info('%s conversation %d' % (pcap, i))
-            result = dump_io(i)
+            result = dump_io(pcap, i)
             log.info(result)
 
 
@@ -78,7 +78,7 @@ def search(pcap, pattern, is_hex):
     data = pattern if not is_hex else pattern.decode('hex')
 
     for i in xrange(count):
-        result = dump_io(i)
+        result = dump_io(pcap, i)
         if data in result:
             log.info('Find in %s conversation %d' % (pcap, i))
             log.info(result)
@@ -100,7 +100,7 @@ def batch(in_f, out_f):
 
 def replay(pcap, cid, host, port):
     r = remote(host, port)
-    for st in dump_io(cid, split=True):
+    for st in dump_io(pcap, cid, split=True):
         direct = st.split(':')[0].strip()
         data = ':'.join(st.split(':')[1:]).strip()
         if 'in' in direct:
