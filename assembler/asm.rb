@@ -308,6 +308,7 @@ end
 
 def test(s)
   s.each_line.with_index(1) do |line, no|
+    line = line.strip
     $line_no = no
     next if is_comment(line)
     ans, line = line.split(nil, 2)
@@ -319,6 +320,10 @@ def test(s)
     out = out.to_i(2).to_s(16).rjust(len, '0')
     fail "#{out} != #{ans}" unless out == ans
   end
+end
+
+if ENV['ASM_TEST']
+  test(IO.read(ENV['ASM_TEST']))
 end
 
 if ARGV.empty?
