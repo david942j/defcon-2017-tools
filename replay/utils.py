@@ -44,13 +44,13 @@ def tcheck(arg):
         except:
             pass
         if v>=0x4010000 and v<0x4010fff:
-            move(in_dir+'/'+name,out_dir+'/touch_flag')
+            os.system('cp '+in_dir+'/'+name+' '+out_dir+'/touch_flag')
         else:
-            move(in_dir+'/'+name,out_dir+'/exception')
+            os.system('cp '+in_dir+'/'+name+' '+out_dir+'/exception')
     elif 'exception' in out or 'Exception' in out:
-        move(in_dir+'/'+name,out_dir+'/exception')
+        os.system('cp '+in_dir+'/'+name+' '+out_dir+'/exception')
     else:
-        move(in_dir+'/'+name,out_dir+'/ok')
+        os.system('cp '+in_dir+'/'+name+' '+out_dir+'/ok')
 
 def check(binary,in_dirname,out_dirname):
     """
