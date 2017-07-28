@@ -124,14 +124,14 @@ def outop(self, op):
     elif optype == o_near:
         addr = op.addr
         if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
-            addr = addr + self.cmd.ea
-        elif self.cmd.itype == self.itype_C or self.cmd.type == self.itype_B:
-            print addr
-            if addr & (1 << 16) == 1:
-                # sign extend
-                addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
+            if self.cmd.itype == self.itype_C or self.cmd.itype == self.itype_B:
+                if addr & 0x10000 != 0:
+                    # sign extend
+                    addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
+                else:
+                    addr = addr + self.cmd.ea
             else:
-                addr = addr + self.cmd.ea
+                addr = (addr + self.cmd.ea) & 0x7ffffff
 
         r = out_name_expr(op, addr, BADADDR)
         if not r:
