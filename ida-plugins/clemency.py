@@ -100,6 +100,10 @@ def ana(self):
     cmd.size += bytelen
     return bytelen
 
+def emu(self):
+    ua_add_cref(0, self.cmd.ea + self.cmd.size, fl_F)
+    return True
+
 def outop(self, op):
     optype = op.type
     if optype == o_reg:
@@ -305,8 +309,9 @@ class CLEMENCY(processor_t):
         return dynana(self)
 
     def emu(self):
-        ua_add_cref(0, self.cmd.ea + self.cmd.size, fl_F)
-        return True
+        reload(self.module)
+        dynemu = getattr(self.module, 'emu')
+        return dynemu(self)
 
     cc_table = [
             'n',
