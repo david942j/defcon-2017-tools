@@ -213,7 +213,7 @@ def outop(self, op):
             out_symbol('R')
     elif optype == o_imm:
         # take size from x.dtyp
-        OutValue(op, OOFW_IMM)
+        OutValue(op, OOFW_32)
     elif optype == o_near:
         addr = op.addr
         # offset
