@@ -53,8 +53,6 @@ def parse(fname):
     streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
-    if not os.path.exists('json'):
-        os.mkdir('json')
     cwd = os.getcwd()+'/'
     d = {'1234':'prob1','38522':'prob1','5566':'prob1'}
     for prob_id,arr in streams.iteritems():
