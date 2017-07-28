@@ -17,10 +17,8 @@ def tcheck(arg):
         if len(r['data'])!=0 and r['id'] == 0: payloads.append(r['data'].decode('base64'))
         if len(r['data'])!=0 and r['id'] == 1: response.append(r['data'].decode('base64'))
     
-    cmd = './clemency-emu-no-access-flag bin/'+binary+' -L '+str(n)+' -d 0 > /tmp/'+proc.name
+    cmd = './checker bin/'+binary+' -L '+str(n)+' > /tmp/'+proc.name
     p = process(cmd, shell=True)
-    p.sendline('g')
-    p.sendline('q')
     
     sleep(0.1)
     r = remote('127.0.0.1',n)
@@ -35,18 +33,22 @@ def tcheck(arg):
     
     p.close()
     out = open('/tmp/'+proc.name).read()
-    if 'exception' in out or 'Exception' in out:
-        flag = False
-        for i in range(1000):
-            s = '4010%0x' % i
-            if s in out:
-                #print 'Find %s' % s
-                flag = True
-                break
-        if flag:
+    if 'Memory read @' in out:
+        pos = out.index('Memory read @')
+        data = out[pos:]
+        pos = data.index('\n')
+        data = data[:pos].split()[-1]
+        v = 0
+        try:
+            v = int(data,16)
+        except:
+            pass
+        if v>=0x4010000 and v<0x4010fff:
             move(in_dir+'/'+name,out_dir+'/touch_flag')
         else:
             move(in_dir+'/'+name,out_dir+'/exception')
+    elif 'exception' in out or 'Exception' in out:
+        move(in_dir+'/'+name,out_dir+'/exception')
     else:
         move(in_dir+'/'+name,out_dir+'/ok')
 
