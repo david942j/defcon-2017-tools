@@ -46,6 +46,7 @@ def parse(fname):
     streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
+    cwd = os.getcwd()+'/'
     for prob_id,arr in streams.iteritems():
         path = os.path.join('stream', prob_id)
         path2 = os.path.join('json', 'todo')
@@ -57,9 +58,12 @@ def parse(fname):
             print 'Save Packet Stream:',fname
             f = file(fname, 'w')
             json.dump(res, f)
-            fname = os.path.join(path2, md5 + '.json')
-            f = file(fname, 'w')
-            json.dump(res, f)
+            fname2 = os.path.join(path2, md5 + '.json')
+            fname = cwd+fname
+            fname2 = cwd+fname2
+            os.symlink(fname,fname2)
+            #f = file(fname, 'w')
+            #json.dump(res, f)
 
 if __name__ == '__main__':
     fdir = 'pcap'
