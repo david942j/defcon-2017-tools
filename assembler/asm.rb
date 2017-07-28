@@ -233,6 +233,14 @@ MACROS = Hash[[
   Macro.new('rpush') {|rA| "stti #{rA}, [ST, 1]"},
   Macro.new('pop') {|rA| "ldtd #{rA}, [ST, 1]"},
   Macro.new('rpop') {|rA| "ldti #{rA}, [ST, 1]"},
+  Macro.new('mov') do |rA, imm|
+    imm = imm.to_i(0)
+    l = imm & ((1 << 17) - 1)
+    h = imm >> 10
+    ret = ["ml #{rA}, #{l}"]
+    ret << "mh #{rA}, #{h}" unless l == imm
+    ret
+  end
 ].map{|x| [x.name, x]}]
 
 def asm(s, start_line_no = 1)
@@ -243,7 +251,7 @@ def asm(s, start_line_no = 1)
   s = s.each_line.with_index(start_line_no).flat_map do |line, no|
     line.strip!
     next [[line, no]] if is_comment(line) || is_label(line) || is_data(line)
-    key, *args = line.split
+    key, *args = line.split(/[ ,]+/)
     next [[line, no]] unless MACROS.include?(key)
     Array(MACROS[key].call(*args)).map{|l| [l, no]}
   end
