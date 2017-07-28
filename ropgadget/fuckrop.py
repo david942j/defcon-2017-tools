@@ -79,7 +79,7 @@ while (Q<maxsize):
 	if x == 0:
 		Q +=1 
 	else :
-		Q = x + 1
+		Q = x + 2
 D =  roplist.keys()
 D.sort()
 
