@@ -35,10 +35,15 @@ def calc_jump_addr(self, op):
                 addr = self.cmd.ea - ((~addr & 0x1ffff) + 1)
             else:
                 addr = addr + self.cmd.ea
+        elif self.cmd.itype == self.itype_CAR or self.cmd.itype == self.itype_BRR:
+            if addr & 0x4000000 != 0:
+                # sign extend
+                addr = self.cmd.ea - ((~addr & 0x7ffffff) + 1)
+            else:
+                addr = addr + self.cmd.ea
         else:
             addr = (addr + self.cmd.ea) & 0x7ffffff
     return addr
-
 
 ########################################
 # Processor Type
