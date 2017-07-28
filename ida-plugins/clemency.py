@@ -58,6 +58,7 @@ def ana_ops(self, ops):
     inst = self.itable[self.cmd.itype]
     opcnt = 0
     opidx = 0
+    hascc = False
     for w, v in inst.args:
         if v[0] == '0' or v[0] == '1':
             continue
@@ -88,6 +89,7 @@ def ana_ops(self, ops):
             self.cmd.auxpref |= ops[opidx] << 4
         elif v == 'Condition':
             self.cmd.auxpref |= ops[opidx]
+            hascc = True
         elif v == 'Memory Flags':
             self.cmd[opcnt].type = o_idpspec0
             self.cmd[opcnt].dtype = dt_dword
@@ -98,6 +100,8 @@ def ana_ops(self, ops):
         else:
             assert False
         opidx += 1
+    if not hascc:
+        self.cmd.auxpref = 0xF
 
 def ana(self):
     cmd = self.cmd
