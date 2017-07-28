@@ -3,12 +3,12 @@ import os
 import sys
 import re
 from clemency_inst import inst_json
+
 ########################################
 # Decoder Function
 ########################################
 def is_bit_string(strg, search=re.compile(r'[^01]').search):
     return not bool(search(strg))
-
 
 def fetch(code, n):
     byte1 = (code >> (54 - 9 * 1)) & 0x1ff
@@ -297,6 +297,7 @@ class CLEMENCY(processor_t):
     module = __import__('clemency')
     def __init__(self):
         processor_t.__init__(self)
+        self.doReload = os.getenv('IDA_RELOAD')
         self._init_registers()
         self._init_instructions()
 
@@ -369,12 +370,14 @@ class CLEMENCY(processor_t):
         self.icode_return = self.itype_RE
 
     def ana(self):
-        reload(self.module)
+        if self.doReload:
+            reload(self.module)
         dynana = getattr(self.module, 'ana')
         return dynana(self)
 
     def emu(self):
-        reload(self.module)
+        if self.doReload:
+            reload(self.module)
         dynemu = getattr(self.module, 'emu')
         return dynemu(self)
 
@@ -439,7 +442,8 @@ class CLEMENCY(processor_t):
         MakeLine(buf)
 
     def outop(self, op):
-        reload(self.module)
+        if self.doReload:
+            reload(self.module)
         dynoutop = getattr(self.module, 'outop')
         return dynoutop(self, op)
 
