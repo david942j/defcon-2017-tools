@@ -1,2 +1,2 @@
-start: 0x6021
+start: 0x51
 asmfile: sample/hard.asm

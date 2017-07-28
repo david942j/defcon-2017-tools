@@ -97,6 +97,9 @@ def get_oribytelen(address, minlen):
     assert bytelen is not None
     return bytelen
 
+def get_first_inst_len(address):
+    return get_oribytelen(address, 1)
+
 def do_setup(base_address, append_bits, setup_address=0x3c, pages=1):
     '''
     We don't preserve R00 !!!!
@@ -150,9 +153,10 @@ def gen_back(address, oribytelen):
     oribits = bytes(bits[bddress:bddress + oribytelen * 9])
     return oribits + bra(address + oribytelen)
 
-def preprocess(asmname, back_address):
+def preprocess(asmname, back_address, skip_address):
     asmdata = open(asmname, 'r').read()
     asmdata = asmdata.replace('BACK', 'bra {}'.format(back_address))
+    asmdata = asmdata.replace('SKIP', 'bra {}'.format(skip_address))
     inf = tempfile.NamedTemporaryFile()
     inf.write(asmdata)
     inf.flush()
@@ -165,16 +169,19 @@ def preprocess(asmname, back_address):
 def gen_patches(base_address, patches):
     append_bits = ''
     back_offsets = []
+    skip_offsets = []
     patch_offsets = []
     for patch in patches:
         start = patch['start']
-        back_offsets.append(len(append_bits) // 9)
+        back_gadget_offset = len(append_bits) // 9
+        back_offsets.append(back_gadget_offset)
+        skip_offsets.append(back_gadget_offset + get_first_inst_len(start))
         append_bits += gen_back(start, get_oribytelen(start, 4))
 
     # Preprocessing
-    for back_offset, patch in zip(back_offsets, patches):
+    for back_offset, skip_offset, patch in zip(back_offsets, skip_offsets, patches):
         patch_offsets.append(len(append_bits) // 9)
-        append_bits += preprocess(patch['asmfile'], back_offset + base_address)
+        append_bits += preprocess(patch['asmfile'], back_offset + base_address, skip_offset + base_address)
 
     return append_bits, patch_offsets
 
