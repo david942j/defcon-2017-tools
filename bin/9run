@@ -22,6 +22,6 @@ end
 IO.write('flag', "FLAG{Hi I am fl4g :P}\n") if tmp_flag
 
 port = rand(10000..65000)
-system [bin('emu'), ARGV.shift, '-L', port].shelljoin + ' 1>&2 &'
+system [bin('9emu'), ARGV.shift, '-L', port].shelljoin + ' 1>&2 &'
 system [bin('9ncat'), port].shelljoin
 
