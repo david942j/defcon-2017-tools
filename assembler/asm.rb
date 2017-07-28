@@ -302,7 +302,7 @@ else
   out_path = ARGV.shift
   if out_path.nil?
     if $stdout.isatty
-      out_path = in_path.gsub(/\.[^.]*|$/, '.bin')
+      out_path = in_path.sub(/(\.[^.]*|)$/, '.bin')
       puts "No output path is given, assume #{out_path}"
     else
       out_path = "/dev/stdout"
