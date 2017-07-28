@@ -206,6 +206,7 @@ def build_data(s)
   eval("[#{code}]")
     .flatten
     .flat_map{|x| x.is_a?(String) ? x.bytes : x}
+    .each{|x| fail "line #{$line_no}: #{x} does not fit into a single byte" if x < 0 || x >= 2 ** 9}
     .map{|x| '%09b' % x}
     .join
 end
@@ -306,6 +307,12 @@ else
     else
       out_path = "/dev/stdout"
     end
+  end
+  begin
+    code = asm(s)
+  rescue RuntimeError => e
+    puts "\e[1;31m#{e}\e[0m"
+    exit 1
   end
   IO.binwrite(out_path, asm(s))
 end
