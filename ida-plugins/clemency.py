@@ -1,8 +1,10 @@
 from idaapi import *
 import os
 import sys
+from clemency_inst import inst_json
 
 def ana(self):
+    print len(self.itable)
     print 'ohya'
     return 0
 
@@ -30,14 +32,6 @@ class CLEMENCY(processor_t):
     # intruction
     # icode of the first instruction
     instruc_start = 0
-    # icode of the last instruction + 1
-    instruc_end = 2
-
-    instruc = [
-            {'name': 'push', 'feature': CF_USE1},
-            {'name': 'pop', 'feature': CF_USE1},
-            ]
-    ##########################
 
     assembler = {
         "flag" : ASH_HEXF3 | ASD_DECF0 | ASO_OCTF1 | ASB_BINF3 | AS_NOTAB
@@ -85,6 +79,7 @@ class CLEMENCY(processor_t):
     def __init__(self):
         processor_t.__init__(self)
         self._init_registers()
+        self._init_instructions()
 
     def _init_registers(self):
 
@@ -98,6 +93,35 @@ class CLEMENCY(processor_t):
         # Set fake segment registers
         self.regFirstSreg = self.regCodeSreg = self.ireg_CS
         self.regLastSreg = self.regDataSreg = self.ireg_DS
+
+    def _init_instructions(self):
+        class idef:
+            def __init__(self, name, cmt, fmt, args):
+                self.name = name
+                self.cmt = cmt
+                self.fmt = fmt
+                self.args = args
+
+        self.itable = {}
+        Instructions = []
+        for j in range(len(inst_json)):
+            i = inst_json[j]
+            args = []
+            for a in i['args']:
+                args.append((a['width'], a['value']))
+            self.itable[j] = idef(i['name'], i['desc'], i['format'], args)
+
+        for j in range(len(self.itable)):
+            x = self.itable[j]
+            d = dict(name = x.name, feature=0)
+            if x.cmt:
+                d['cmt'] = x.cmt
+            Instructions.append(d)
+            setattr(self, 'itype_' + x.name, j)
+
+        self.instruc_end = len(Instructions) + 1
+        self.instruc = Instructions
+        self.icode_return = self.itype_RE
 
     def ana(self):
         reload(self.module)
