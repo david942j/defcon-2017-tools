@@ -457,12 +457,15 @@ class CLEMENCY(processor_t):
             ]
 
     def out(self):
+        if self.cmd.ea == 0x5eef:
+            print self.cmd.auxpref
+
         buf = idaapi.init_output_buffer(1024)
 
         postfix = ''
         # Adjust Register
         #   e.g., LDSI, LDSD
-        adjust_flag = self.cmd.auxpref & self.FL_ADJUST
+        adjust_flag = (self.cmd.auxpref & self.FL_ADJUST) >> 5
         if adjust_flag == 1:
             postfix += 'i'
         elif adjust_flag == 2:
