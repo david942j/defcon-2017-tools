@@ -1,2 +1,2 @@
-start: 0x0
-bits: '011000000101000000'
+start: 0x901
+asmfile: sample/easy.asm
