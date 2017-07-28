@@ -10,4 +10,4 @@ while True:
     check(name[4:],'json/todo',out_dir)
     for f in os.listdir('json/todo'):
         os.remove('json/todo/'+f)
-    time.sleep(30)
+    time.sleep(200)
