@@ -3635,4 +3635,103 @@ inst_json = [
   }
 ]
 
+'''
+class A:
+    def _init_instructions(self):
+        class idef:
+            def __init__(self, name, cmt, fmt, args):
+                self.name = name
+                self.cmt = cmt
+                self.fmt = fmt
+                self.args = args
 
+        self.itable = {}
+        self.imatch = {}
+
+        for j in range(len(inst_json)):
+            i = inst_json[j]
+            args = []
+            for a in i['args']:
+                args.append((a['width'], a['value']))
+
+            # Set itable entry for instruction #j
+            self.itable[j] = idef(i['name'], i['desc'], i['format'], args)
+
+            # Generate matching table entry
+            ws = sum([w for w, v in args])
+            off = 0
+            masks = []
+            vals = []
+            for w, v in args:
+                if v[0] in '01':
+                    masks.append(((1 << (ws - off)) - (1 << (ws - off - w)), ws - off - w))
+                    vals.append(int(v, 2))
+                off += w
+            grp = (ws, tuple(masks))
+            vals = tuple(vals)
+            if grp not in self.imatch:
+                ops = []
+                off = 0
+                for w, v in args:
+                    if v[0] not in '01':
+                        ops.append(((1 << (ws - off)) - (1 << (ws - off - w)), ws - off - w))
+                    off += w
+                self.imatch[grp] = (tuple(ops), {}) # (operand mask, inst match table)
+            self.imatch[grp][1][vals] = j
+
+        Instructions = []
+        for j in range(len(self.itable)):
+            x = self.itable[j]
+            d = dict(name = x.name, feature=0)
+            if x.cmt:
+                d['cmt'] = x.cmt
+            Instructions.append(d)
+            setattr(self, 'itype_' + x.name, j)
+
+        self.instruc_end = len(Instructions) + 1
+        self.instruc = Instructions
+        self.icode_return = self.itype_RE
+
+    def fetch(self, code, n):
+        byte1 = (code >> (54 - 9 * 1)) & 0x1ff
+        byte2 = (code >> (54 - 9 * 2)) & 0x1ff
+        byte3 = (code >> (54 - 9 * 3)) & 0x1ff
+        byte4 = (code >> (54 - 9 * 4)) & 0x1ff
+        byte5 = (code >> (54 - 9 * 5)) & 0x1ff
+        byte6 = (code >> (54 - 9 * 6)) & 0x1ff
+        if n == 18:
+            return (byte2 << 9) + byte1
+        elif n == 27:
+            return (byte2 << 18) + (byte1 << 9) + byte3
+        elif n == 36:
+            return (byte2 << 27) + (byte1 << 18) + (byte3 << 9) + byte4
+        elif n == 54:
+            return (byte2 << 45) + (byte1 << 36) + (byte3 << 27) + (byte5 << 18) + (byte4 << 9) + byte6
+
+    def ana(self):
+
+        code_bit = ''.join(map(lambda x: '{:09b}'.format(x), [0, 0, 0x20, 0, 0, 2]))
+        code = int(code_bit, 2)
+
+        for g in self.imatch:
+            bitlen, masks = g
+            ops, imap = self.imatch[g]
+            code2 = self.fetch(code, bitlen)
+            bits = tuple(map(lambda x: (code2 & x[0]) >> x[1], masks))
+            print code
+            print code2
+            print bitlen
+            print masks
+            print imap
+            print bits
+            print '{:054b}'.format(code2)
+            print '============================================='
+            if bits in imap:
+                idx = imap[bits]
+                print self.itable[idx].name, self.itable[idx].args
+
+
+a = A()
+a._init_instructions()
+a.ana()
+'''

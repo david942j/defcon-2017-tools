@@ -3652,10 +3652,17 @@ for j in range(len(inst_json)):
     x = tuple([w for w, v in args])
     if x not in igroup:
         igroup[x] = []
-    igroup[x].append([i['name'].ljust(8)] + args)
+    igroup[x].append([i['name']] + args)
 
 
 for g in igroup:
     print '### ' + str(g) + ' ###'
+    x = igroup[g][0]
+    print str(x[1:])
+    print '{'
     for x in igroup[g]:
-        print x
+        z = []
+        for a,y in x[1:]:
+            if y[0]=='0' or y[0]=='1':
+                z.append(int(y, 2))
+        print ('"' + x[0] + '"').ljust(8) + ':' + str(tuple(z)) + '\t# ' + str(x[1:]) 
