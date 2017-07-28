@@ -211,6 +211,31 @@ def build_data(s)
     .join
 end
 
+def inst_width(key)
+  inst = HANDLER[key]
+  fail "line #{$line_no}: unknown instruction #{key}" unless inst
+  inst['args'].map{|x| x['width']}.inject(:+)
+end
+
+class Macro
+  def initialize(name, width: nil, insts: [], &action)
+    @name = name
+    @width = width || Array(insts).map{|c| inst_width(c)}.inject(0, :+)
+    @action = action
+  end
+  attr_reader :name, :width
+  def call(*args, &block)
+    @action.call(*args, &block)
+  end
+end
+
+MACROS = Hash[[
+  Macro.new('push', insts: 'sttd') {|rA| "sttd #{rA}, [ST, 1]"},
+  Macro.new('rpush', insts: 'stti') {|rA| "stti #{rA}, [ST, 1]"},
+  Macro.new('pop', insts: 'ldtd') {|rA| "ldtd #{rA}, [ST, 1]"},
+  Macro.new('rpop', insts: 'ldti') {|rA| "ldti #{rA}, [ST, 1]"},
+].map{|x| [x.name, x]}]
+
 def asm(s, start_line_no = 1)
   labels = {}
   pos = 0
@@ -232,10 +257,11 @@ def asm(s, start_line_no = 1)
     end
 
     key = line.split[0]
-    inst = HANDLER[key]
-    fail "line #{$line_no}: unknown instruction #{key}" unless inst
-    width = inst['args'].map{|x| x['width']}.inject(:+)
-    pos += width
+    if MACROS.include?(key)
+      pos += MACROS[key].width
+    else
+      pos += inst_width(key)
+    end
   end
 
   pos = 0
@@ -249,6 +275,11 @@ def asm(s, start_line_no = 1)
       now = build_data(line)
     else
       key = line.split[0]
+      if MACROS.include?(key)
+        args = line.split[1..-1]
+        line = MACROS[key].call(*args)
+        key = line.split[0]
+      end
       inst = HANDLER[key]
       fail "line #{$line_no}: unknown instruction #{key}" unless inst
       rel = inst['args'].any?{|x| x['value'] == 'Offset'}
