@@ -4,6 +4,7 @@ import os
 import hashlib
 from scapy.all import *
 from collections import defaultdict
+from multiprocessing import Pool
 
 class PcapParser(object):
     def __init__(self, filename):
@@ -15,7 +16,6 @@ class PcapParser(object):
         s = pcap.sessions()
         for k, v in s.iteritems():
             v = sorted(v, key=lambda x: x.time)
-            print v[0].ack,v[0].seq
             h[v[0].seq+1].append(v)
             if v[0].ack != 0:
                 h[v[0].ack].append(v)
@@ -30,29 +30,37 @@ class PcapParser(object):
         return res
 
     def get_streams(self):
-        return self.data
+        res = defaultdict(list)
+        for i in self.data:
+            counter = [0, 0]
+            arr = []
+            for a,b in i:
+                val = base64.b64encode(str(b[Raw])) if Raw in b else ''
+                arr.append({ 'id': a, 'counter': counter[a], 'timestamp': b.time, 'data': val })
+                counter[a] += 1
+            prob_id = str(i[1][1].getlayer('TCP').sport)
+            res[prob_id].append(arr)
+        return res
 
-if __name__ == '__main__':
-    fname = 'hello.pcap'
-    if len(sys.argv) >= 2:
-        fname = sys.argv[1]
+def parse(fname):
     streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
-    for i in streams:
-        counter = [0, 0]
-        res = []
-        for a,b in i:
-            val = base64.b64encode(str(b[Raw])) if Raw in b else ''
-            res.append({ 'id': a, 'counter': counter[a], 'timestamp': b.time, 'data': val })
-            counter[a] += 1
-        prob_id = str(i[1][1].getlayer('TCP').sport)
+    for prob_id,arr in streams.iteritems():
         path = os.path.join('stream', prob_id)
         if not os.path.exists(path):
             os.mkdir(path)
-        md5 = hashlib.md5(json.dumps(res)).hexdigest()
-        fname = md5 + '.json'
-        fname = os.path.join(path, fname)
-        print 'Save Packet Stream:',fname
-        f = file(fname, 'w')
-        json.dump(res, f)
+        for res in arr:
+            md5 = hashlib.md5(json.dumps(res)).hexdigest()
+            fname = os.path.join(path, md5 + '.json')
+            print 'Save Packet Stream:',fname
+            f = file(fname, 'w')
+            json.dump(res, f)
+
+if __name__ == '__main__':
+    fdir = 'pcap'
+    if len(sys.argv) >= 2:
+        fdir = sys.argv[1]
+    flist = [fdir+'/'+name for name in os.listdir(fdir)]
+    p = Pool(10)
+    p.map(parse,flist)
