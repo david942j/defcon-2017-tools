@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+require 'shellwords'
+
+if ARGV.empty?
+  puts "Usage: #{File.basename(__FILE__)} BIN_PATH"
+  exit 1
+end
+
+def bin(x)
+  File.join(File.dirname(__FILE__), x)
+end
+
+tmp_flag = !File.file?('flag')
+
+trap(:INT) {}
+
+at_exit do
+  File.delete('flag') if tmp_flag
+end
+
+IO.write('flag', "FLAG{Hi I am fl4g :P}\n") if tmp_flag
+
+port = rand(10000..65000)
+system [bin('emu'), ARGV.shift, '-L', port].shelljoin + ' 1>&2 &'
+system [bin('9ncat'), port].shelljoin
+

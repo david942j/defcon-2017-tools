@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require 'shellwords'
+
+if ARGV.empty?
+  puts "Usage: #{File.basename(__FILE__)} HOST PORT"
+  puts "    or #{File.basename(__FILE__)} PORT (HOST = 127.0.0.1)"
+  exit 1
+end
+
+host, port = ARGV
+host, port = '127.0.0.1', host if port.nil?
+exec [File.join(File.dirname(__FILE__), '9io'), 'ncat', host, port].shelljoin

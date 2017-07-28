@@ -28,7 +28,7 @@ def test
 end
 
 if ARGV.empty?
-  puts "Usage: #{__FILE__} [COMMANDS...]"
+  puts "Usage: #{File.basename(__FILE__)} [COMMANDS...]"
   exit 1
 end
 
