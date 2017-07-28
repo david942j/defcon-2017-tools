@@ -37,19 +37,19 @@ def ana_ops(self, ops):
     opcnt = 0
     for w, v in inst.args:
         if v[0] == 'r':
-	    self.cmd[opcnt].type = o_reg
+            self.cmd[opcnt].type = o_reg
             self.cmd[opcnt].dtype = dt_dword
             self.cmd[opcnt].reg = ops[opcnt]
         elif v[0] == 'I':
-	    self.cmd[opcnt].type = o_imm
+            self.cmd[opcnt].type = o_imm
             self.cmd[opcnt].dtype = dt_dword
             self.cmd[opcnt].value = ops[opcnt]
         elif v[0] == 'L' or v[0] == 'O':
-	    self.cmd[opcnt].type = o_near
+            self.cmd[opcnt].type = o_near
             self.cmd[opcnt].dtype = dt_dword
             self.cmd[opcnt].addr = ops[opcnt]
         elif v[0] == 'R':
-	    self.cmd[opcnt - 1].type = o_displ
+            self.cmd[opcnt - 1].type = o_displ
             self.cmd[opcnt - 1].dtype = dt_dword
             self.cmd[opcnt - 1].specval = ops[opcnt]
             self.cmd[opcnt - 1].phrase = ops[opcnt - 1]
@@ -59,7 +59,7 @@ def ana_ops(self, ops):
         elif v[0] == 'U':
             self.cmd.auxpref |= (ops[opcnt] & 0xF)
         elif v == 'Memory Flags':
-	    self.cmd[opcnt - 1].type = o_idpspec0
+            self.cmd[opcnt - 1].type = o_idpspec0
             self.cmd[opcnt - 1].dtype = dt_dword
             self.cmd[opcnt - 1].specval = ops[opcnt]
         elif v == 'Memory Offset':
@@ -68,7 +68,6 @@ def ana_ops(self, ops):
             continue
         opcnt += 1
     print self.cmd
-
 
 def ana(self):
     cmd = self.cmd
@@ -93,6 +92,54 @@ def ana(self):
     bytelen = bitlen // 9
     cmd.size += bytelen
     return bytelen
+
+def outop(self, op):
+    optype = op.type
+    if optype == o_reg:
+        out_register(self.regNames[op.reg])
+    elif optype == o_idpspec0:
+        if op.value == 0:
+            out_symbol('N')
+        elif op.value == 1:
+            out_symbol('R')
+        elif op.value == 2:
+            out_symbol('R')
+            out_symbol('W')
+        elif op.value == 3:
+            out_symbol('E')
+        else:
+            out_symbol('E')
+            out_symbol('R')
+            out_symbol('R')
+    elif optype == o_imm:
+        # take size from x.dtyp
+        OutValue(op, OOFW_IMM)
+    elif optype == o_near:
+        print op.addr
+        print self.cmd.ea
+        addr = op.addr
+        if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
+            addr = addr + self.cmd.ea
+
+        r = out_name_expr(op, addr, BADADDR)
+        if not r:
+            out_tagon(COLOR_ERROR)
+            OutValue(op, OOF_ADDR)
+            out_tagoff(COLOR_ERROR)
+            QueueSet(Q_noName, self.cmd.ea)
+    elif optype == o_displ:
+        out_symbol('[')
+        out_register(self.regNames[op.phrase])
+        out_symbol(' ')
+        out_symbol('+')
+        out_symbol(' ')
+        OutValue(op, OOF_ADDR)
+        out_symbol(',')
+        out_symbol(' ')
+        OutLine("%d" % op.specval)
+        out_symbol(']')
+
+    return True
 
 class CLEMENCY(processor_t):
     # IDP id ( Numbers above 0x8000 are reserved for the third-party modules)
@@ -159,6 +206,11 @@ class CLEMENCY(processor_t):
         "a_shr": ">>",
         "a_sizeof_fmt": "size %s",
     }
+
+    # flag for auxpref
+    FL_UF              = 0x0010
+    FL_CC              = 0x000F
+    FL_ADJUST          = 0x0060
 
 
     module = __import__('clemency')
@@ -244,9 +296,52 @@ class CLEMENCY(processor_t):
         print "emu"
         return True
 
+    cc_table = [
+            'n',
+            'e',
+            'l',
+            'le',
+            'g',
+            'ge',
+            'no',
+            'o',
+            'ns',
+            's',
+            'sl',
+            'sle',
+            'sg',
+            'sge',
+            '',
+            '',
+            ]
+
     def out(self):
         buf = idaapi.init_output_buffer(1024)
-        OutMnem(12)
+
+        postfix = ''
+        # Adjust Register
+        #   e.g., LDSI, LDSD
+        adjust_flag = self.cmd.auxpref & self.FL_ADJUST
+        if adjust_flag == 1:
+            postfix += 'I'
+        elif adjust_flag == 2:
+            postfix += 'D'
+
+        # Conditional
+        #   e.g., Bge
+        cc_idx = self.cmd.auxpref & self.FL_CC
+        print self.cmd.auxpref
+        print cc_idx
+        if cc_idx != 0:
+            idx = self.cmd.auxpref & self.FL_CC
+            postfix += self.cc_table[idx]
+
+        # Update Flag
+        #   e.g., ad.
+        if self.cmd.auxpref & self.FL_UF == 1:
+            postfix += '.'
+
+        OutMnem(12, postfix)
 
         for i in xrange(6):
             op = self.cmd[i]
@@ -264,24 +359,9 @@ class CLEMENCY(processor_t):
         MakeLine(buf)
 
     def outop(self, op):
-        optype = op.type
-        if optype == o_reg:
-            out_register(self.regNames[op.reg])
-        elif optype == o_imm:
-            if op.value == 0:
-                out_symbol('N')
-            elif op.value == 1:
-                out_symbol('R')
-            elif op.value == 2:
-                out_symbol('R')
-                out_symbol('W')
-            elif op.value == 3:
-                out_symbol('E')
-            else:
-                out_symbol('E')
-                out_symbol('R')
-                out_symbol('R')
-        return True
+        reload(self.module)
+        dynoutop = getattr(self.module, 'outop')
+        return dynoutop(self, op)
 
 ########################################
 # Data format for TriBytes (9bits)
