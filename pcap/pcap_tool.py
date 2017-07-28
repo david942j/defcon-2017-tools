@@ -22,10 +22,10 @@ def to_8bit(d9):
     d8 = d8.strip('\x00')
     return d8
 
-def dump_io(cid, split=False):
+def dump_io(pcap, cid, split=False):
     fol = []
 
-    p = sp.Popen('tshark -r test.pcap -z follow,tcp,raw,%d' % cid, shell=True, stdout=sp.PIPE)
+    p = sp.Popen('tshark -r %s -z follow,tcp,raw,%d' % (pcap, cid), shell=True, stdout=sp.PIPE)
     o = p.stdout.read()
     o = o[o.find('========'):].strip('=\n')
     o = '\n'.join(o.split('\n')[4:]).strip()
@@ -55,7 +55,7 @@ def dump_io(cid, split=False):
 
 def dump(pcap, cid):
     if cid != None:
-        result = dump_io(cid)
+        result = dump_io(pcap, cid)
         if result:
             sys.stdout.write(result)
         else:

@@ -120,7 +120,7 @@ def ana(self):
         return 0
     ana_ops(self, map(lambda x: (code2 & x[0]) >> x[1], ops))
 
-
+    # Remove this block to disable simplifying ML+MH
     if cmd.itype == self.itype_MH and cmd.ea >= 3:
         code_bit = ''
         last_ea = cmd.ea - 3

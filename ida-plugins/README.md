@@ -5,8 +5,8 @@ cLEMENCy IDA Plugin
 
 ### Usage
 
-1. Copy `clemency.py clemency_inst.py` to `IDA 6.8/procs/`
-2. Run `preprocessor.py` for target binary
+1. Copy `clemency.py` and `clemency_inst.py` to `IDA 6.8/procs/`
+2. Run `preprocess.py` for target binary
 3. Open preprocessed binary in IDA and then choose `clemency` processor
 4. Press Ok to all
 
@@ -19,3 +19,4 @@ cLEMENCy IDA Plugin
 ### Simplified Instructions
 
 - `ml rA, lo + mh rA, hi -> meh rA, (hi << 10) | (lo & 0x3ff)`
+    - Warning: the result may be incorrect if ml and mh are at the boundary of two basicblocks
