@@ -76,6 +76,7 @@ def collect_patches(dir):
         assert config['start'] != None
         assert config['asmfile'] != None
         config['asmfile'] = os.path.join(dir, config['asmfile'])
+        print("Patch '{}' to 0x{:x}".format(config['asmfile'], config['start']))
         patches.append(config)
     return patches
 
@@ -87,7 +88,7 @@ def load_bin(file):
     return data[0:len(data) - (len(data) % 9)]
 
 def get_oribytelen(address, minlen):
-    data = emudisasm.parse_function(options.bin, address)
+    data = emudisasm.parse_function(os.path.realpath(options.bin), address)
     addresses = list(int(line.split(':')[0], 16) for line in data.split('\n'))
     bytelen = None
     for addr in addresses:
@@ -209,4 +210,5 @@ do_hooks(base_address, patches, patch_offsets)
 patched_bits = bytes(do_setup(base_address, append_bits))
 
 output = options.output or (options.bin + '.patch')
+print('\nPatched file: ' + output)
 open(output, 'wb').write(''.join(chr(int(x, 2)) for x in group(8, patched_bits, 'fill', '0')))
