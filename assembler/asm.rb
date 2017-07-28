@@ -241,6 +241,7 @@ def asm(s, start_line_no = 1)
 
   # expand macros
   s = s.each_line.with_index(start_line_no).flat_map do |line, no|
+    line.strip!
     next [[line, no]] if is_comment(line) || is_label(line) || is_data(line)
     key, *args = line.split
     next [[line, no]] unless MACROS.include?(key)
