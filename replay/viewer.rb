@@ -36,10 +36,14 @@ arr.each do |i|
     .each_slice(BPL)
     .each_with_index do |arr, i|
     $stdout.write('  %07x:' % (BPL * i))
-    arr.each { |c| $stdout.write(' %03x' % c) }
+    arr.each do |c|
+      $stdout.write("\e[1;30m") unless c.between?(32, 127)
+      $stdout.write(' %03x' % c)
+      $stdout.write("\e[0m") unless c.between?(32, 127)
+    end
     $stdout.write(' ' * (15 - arr.size) * 4)
     $stdout.write '|'
-    arr.each { |c| $stdout.write(c.between?(32, 127) ? c.chr : '.') }
+    arr.each { |c| $stdout.write(c.between?(32, 127) ? c.chr : "\e[1;30m.\e[0m") }
     $stdout.puts '|'
   end
   $stdout.puts ''
