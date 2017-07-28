@@ -293,7 +293,7 @@ class CLEMENCY(processor_t):
         Instructions = []
         for j in range(len(self.itable)):
             x = self.itable[j]
-            d = dict(name = x.name, feature=0)
+            d = dict(name = x.name.lower(), feature=0)
             if x.cmt:
                 d['cmt'] = x.cmt
             Instructions.append(d)
