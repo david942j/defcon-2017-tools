@@ -10,6 +10,11 @@ from clemency_inst import inst_json
 def is_bit_string(strg, search=re.compile(r'[^01]').search):
     return not bool(search(strg))
 
+def SIGNEXT(x, b):
+  m = 1 << (b - 1)
+  x = x & ((1 << b) - 1)
+  return (x ^ m) - m
+
 def fetch(code, n):
     byte1 = (code >> (54 - 9 * 1)) & 0x1ff
     byte2 = (code >> (54 - 9 * 2)) & 0x1ff
@@ -118,15 +123,35 @@ def ana(self):
     cmd.size += bytelen
     return bytelen
 
+def add_stkpnt(self, pfn, v):
+    if pfn:
+        end = self.cmd.ea + self.cmd.size
+        if not is_fixed_spd(end):
+            add_auto_stkpnt2(pfn, end, v)
+            print hex(end), v
+
+def trace_sp(self):
+    cmd = self.cmd
+    pfn = get_func(cmd.ea)
+    if not pfn:
+        return
+    if cmd.Op1.type == o_reg and cmd.Op1.reg == self.ireg_ST:
+        if cmd.Op2.type == o_reg and cmd.Op2.reg == self.ireg_ST:
+            if cmd.itype == self.itype_SBI:
+                add_stkpnt(self, pfn, -SIGNEXT(cmd.Op3.value, 7))
+            elif cmd.itype == self.itype_ADI:
+                add_stkpnt(self, pfn, SIGNEXT(cmd.Op3.value, 7))
+
 def emu(self):
     cmd = self.cmd
     aux = self.get_auxpref()
 
+    flow = False
     if cmd.itype in [self.itype_B, self.itype_BR, self.itype_BRA, self.itype_BRR]:
         if cmd.itype != self.itype_BR:
             ua_add_cref(0, calc_jump_addr(self, cmd.Op1), fl_JN)
         if cmd.itype not in [self.itype_B, self.itype_BR] or (aux & 0xF) != 0xF:
-            ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+            flow = True
     elif cmd.itype in [self.itype_C, self.itype_CR, self.itype_CAR, self.itype_CAA]:
         if cmd.itype != self.itype_CR:
             ua_add_cref(cmd.Op1.offb, calc_jump_addr(self, cmd.Op1), fl_CN)
@@ -134,7 +159,16 @@ def emu(self):
     elif cmd.itype in [self.itype_RE, self.itype_HT]:
         pass
     else:
+        flow = True
+
+    if flow:
         ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+
+    #if may_trace_sp():
+    #    if flow:
+    #        trace_sp(self)
+    #    else:
+    #        recalc_spd(self.cmd.ea)
 
     return True
 
