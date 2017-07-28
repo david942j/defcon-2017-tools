@@ -480,7 +480,7 @@ class nbit_str_data_type(data_type_t):
     def __init__(self):
         data_type_t.__init__(self,
                              name = "py_str",
-                             hotkey = 'x',
+                             hotkey = ',',
                              value_size = 1,
                              menu_name = "String (9bits)",
                              asm_keyword = nbit_str_data_type.ASM_KEYWORD)
