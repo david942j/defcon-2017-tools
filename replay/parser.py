@@ -42,19 +42,33 @@ class PcapParser(object):
             res[prob_id].append(arr)
         return res
 
+def concat_data(arr):
+    res = ''
+    for i in arr:
+        if i['id'] == 1: continue
+        res += i['data'].decode('base64')
+    return res
+
 def parse(fname):
     streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
+    if not os.path.exists('json'):
+        os.mkdir('json')
     cwd = os.getcwd()+'/'
     for prob_id,arr in streams.iteritems():
         path = os.path.join('stream', prob_id)
         path2 = os.path.join('json', 'todo')
         if not os.path.exists(path):
             os.mkdir(path)
+        if not os.path.exists(path2):
+            os.mkdir(path2)
         for res in arr:
-            md5 = hashlib.md5(json.dumps(res)).hexdigest()
+            data = concat_data(res)
+            md5 = hashlib.md5(data).hexdigest()
             fname = os.path.join(path, md5 + '.json')
+            if os.path.exists(fname):
+                continue
             print 'Save Packet Stream:',fname
             f = file(fname, 'w')
             json.dump(res, f)
