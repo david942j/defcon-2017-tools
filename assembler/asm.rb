@@ -35,6 +35,10 @@ def is_comment(s)
   s.empty? || s[0] == ';' || s[0] == '#' || s.start_with?('//')
 end
 
+def is_label(s)
+  !!(s =~ /^@\w+:$/) # no Regexp#match? in ruby 2.3 :(
+end
+
 HANDLER = {}
 data = JSON.parse(DATA.read)
 data.each do |inst|
@@ -110,7 +114,7 @@ def parse_flags(s)
   %w(N R RW E).each_with_index do |f, i|
     return [i, s[f.size..-1]] if s[/^#{f}\b/]
   end
-  fail "line #{$line_no}: cannot parse flags from #{s.inspect}" 
+  fail "line #{$line_no}: cannot parse flags from #{s.inspect}"
 end
 
 def parse_cond(s)
@@ -185,21 +189,55 @@ def asm_one(inst, line)
       code << pack(arg['width'], num)
     end
   end
+  $stderr.puts "\n#{line}\n#{var.inspect}\n#{code.inspect}" if ENV['ASM_DEBUG'].to_i > 0
   code = code.join
   fail unless code.size % 9 == 0
   code
 end
 
-def asm(s)
-  code = []
-  s.each_line.with_index(1) do |line, no|
+def asm(s, start_line_no = 1)
+  labels = {}
+  pos = 0
+  s.each_line.with_index(start_line_no) do |line, no|
     $line_no = no
     line = line.strip
     next if is_comment(line)
+
+    if is_label(line)
+      lab = line[0...-1]
+      fail "line #{$line_no}: duplicate label #{lab}" if labels.include?(lab)
+      labels[lab] = pos
+      next
+    end
+
     key = line.split[0]
     inst = HANDLER[key]
     fail "line #{$line_no}: unknown instruction #{key}" unless inst
-    code << endian(asm_one(inst, line))
+    width = inst['args'].map{|x| x['width']}.inject(:+)
+    pos += width
+  end
+
+  pos = 0
+  code = []
+  s.each_line.with_index(start_line_no) do |line, no|
+    $line_no = no
+    line = line.strip
+    next if is_comment(line) || is_label(line)
+
+    key = line.split[0]
+    inst = HANDLER[key]
+    fail "line #{$line_no}: unknown instruction #{key}" unless inst
+    rel = inst['args'].any?{|x| x['value'] == 'Offset'}
+    line = line.gsub(/@\w+/) do |lab|
+      fail "line #{$line_no}: undefined label #{lab}" unless labels.include?(lab)
+      lab_pos = labels.fetch(lab)
+      val = rel ? lab_pos - pos : lab_pos
+      fail unless val % 9 == 0
+      val / 9
+    end
+    now = endian(asm_one(inst, line))
+    code << now
+    pos += now.size
   end
   code = code.join
   code += '0' * (8 - code.size % 8) if code.size % 8 != 0
@@ -227,7 +265,7 @@ if ARGV.empty?
   require 'readline'
   while line = Readline.readline('> ', true) do
     begin
-      code = asm(line)
+      code = asm(line, $line_no + 1)
       puts "#{code.unpack('H*')[0].ljust(14)}\t#{code.inspect}"
     rescue RuntimeError => e
       puts e
