@@ -234,9 +234,9 @@ MACROS = Hash[[
   Macro.new('pop') {|rA| "ldtd #{rA}, [ST, 1]"},
   Macro.new('rpop') {|rA| "ldti #{rA}, [ST, 1]"},
   Macro.new('mov') do |rA, imm|
-    imm = imm.to_i(0)
-    l = imm & ((1 << 17) - 1)
-    h = imm >> 10
+    bits = pack(27, imm.to_i(0))
+    l = bits[10, 17].to_i(2)
+    h = bits[0, 17].to_i(2)
     ret = ["ml #{rA}, #{l}"]
     ret << "mh #{rA}, #{h}" unless l == imm
     ret
