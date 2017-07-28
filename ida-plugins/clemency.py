@@ -101,7 +101,7 @@ def ana_ops(self, ops):
             assert False
         opidx += 1
     if not hascc:
-        self.cmd.auxpref = 0xF
+        self.cmd.auxpref |= 0xF
 
 def ana(self):
     cmd = self.cmd
