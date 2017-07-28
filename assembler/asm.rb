@@ -72,7 +72,7 @@ def parse_num(s)
   s.lstrip!
   m = s[/^[+-]?(0x[0-9a-f]+|0b[01]+|[0-9]+)/i]
   fail "line #{$line_no}: cannot parse number from #{s.inspect}" unless m
-  [m.to_i(0), s[m.size..-1]]
+  [Integer(m), s[m.size..-1]]
 end
 
 def parse_m(s)
@@ -234,7 +234,7 @@ MACROS = Hash[[
   Macro.new('pop') {|rA| "ldtd #{rA}, [ST, 1]"},
   Macro.new('rpop') {|rA| "ldti #{rA}, [ST, 1]"},
   Macro.new('mov') do |rA, imm|
-    imm = imm.to_i(0)
+    imm = Integer(imm)
     bits = pack(27, imm)
     l = bits[10, 17].to_i(2)
     h = bits[0, 17].to_i(2)
