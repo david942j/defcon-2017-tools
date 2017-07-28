@@ -185,6 +185,16 @@ def emu(self):
     if flow:
         ua_add_cref(0, cmd.ea + cmd.size, fl_F)
 
+    if cmd.itype in [self.itype_MEH]:
+        ua_add_dref(2, cmd[1].value, dr_R)
+        c1 = get_full_byte(cmd[1].value) & 0x1ff
+        c2 = get_full_byte(cmd[1].value+1) & 0x1ff
+        c3 = get_full_byte(cmd[1].value+2) & 0x1ff
+        if c1 >= 0x20 and c1 <= 0x7f \
+                and c2 >= 0x20 and c2 <= 0x7f \
+                and c3 >= 0x20 and c3 <= 0x7f:
+            MakeCustomDataEx(cmd[1].value, 0, self.nstr_dtid, self.nstr_dfid)
+
     #if may_trace_sp():
     #    if flow:
     #        trace_sp(self)
@@ -352,9 +362,20 @@ class CLEMENCY(processor_t):
     module = __import__('clemency')
     def __init__(self):
         processor_t.__init__(self)
+        # new data format
+        self.init_data_format()
+        # reload debug flag
         self.doReload = os.getenv('IDA_RELOAD')
+        # init
         self._init_registers()
         self._init_instructions()
+
+    def init_data_format(self):
+        self.tribyte_dtid = register_custom_data_type(tribyte_data_type())
+        self.tribyte_dfid = register_custom_data_format(self.tribyte_dtid, tribyte_data_format())
+        self.nstr_dtid = register_custom_data_type(nbit_str_data_type())
+        self.nstr_dfid = register_custom_data_format(self.nstr_dtid, nbit_str_data_format())
+
 
     def _init_registers(self):
 
@@ -559,7 +580,7 @@ class nbit_str_data_format(data_format_t):
     def __init__(self):
         data_format_t.__init__(self,
                                name = "py_str_format",
-                               menu_name = "String (9bits)")
+                               menu_name = "String (9bits) format")
 
     def printf(self, value, current_ea, operand_num, dtid):
         r = ''
@@ -567,19 +588,10 @@ class nbit_str_data_format(data_format_t):
             r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
         return '"%s", 0' % (r)
 
-def init_data_format():
-    new_format = [
-            (tribyte_data_type(), tribyte_data_format()),
-            (nbit_str_data_type(), nbit_str_data_format()),
-            ]
-    register_data_types_and_formats(new_format)
-
 ########################################
 # Processor Plugin Entry
 ########################################
 def PROCESSOR_ENTRY():
-    # new data format
-    init_data_format()
     # add proc into module path
     script_path = os.path.abspath(__file__)
     script_dir = os.path.dirname(script_path)
