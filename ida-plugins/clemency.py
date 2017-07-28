@@ -204,15 +204,42 @@ class CLEMENCY(processor_t):
         return True
 
     def out(self):
-        print "out"
         buf = idaapi.init_output_buffer(1024)
         OutMnem(12)
+
+        for i in xrange(6):
+            op = self.cmd[i]
+
+            if op.type == o_void:
+                break
+
+            if i > 0:
+                out_symbol(',')
+                OutChar(' ')
+            out_one_operand(i)
+
         term_output_buffer()
         cvar.gl_comm = 1
         MakeLine(buf)
 
     def outop(self, op):
-        print "outop"
+        optype = op.type
+        if optype == o_reg:
+            out_register(self.regNames[op.reg])
+        elif optype == o_imm:
+            if op.value == 0:
+                out_symbol('N')
+            elif op.value == 1:
+                out_symbol('R')
+            elif op.value == 2:
+                out_symbol('R')
+                out_symbol('W')
+            elif op.value == 3:
+                out_symbol('E')
+            else:
+                out_symbol('E')
+                out_symbol('R')
+                out_symbol('R')
         return True
 
 ########################################
