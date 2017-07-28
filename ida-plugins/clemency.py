@@ -115,11 +115,9 @@ def outop(self, op):
         # take size from x.dtyp
         OutValue(op, OOFW_IMM)
     elif optype == o_near:
-        print op.addr
-        print self.cmd.ea
         addr = op.addr
         if self.cmd.itype != self.itype_BRA and self.cmd.itype != self.itype_CAA:
-            addr = addr + self.cmd.ea
+            addr = addr + self.cmd.ea - self.cmd.size
 
         r = out_name_expr(op, addr, BADADDR)
         if not r:
