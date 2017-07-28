@@ -238,7 +238,7 @@ class CLEMENCY(processor_t):
     psnames = ["clemency"]
     # long processor names (NULL terminated)
     # No restriction on name lengthes.
-    plnames = ["cLemency"]
+    plnames = ["cLEMENCy"]
 
     segreg_size = 0
 
@@ -476,9 +476,42 @@ class tribyte_data_format(data_format_t):
         b3 = idaapi.get_full_byte(current_ea+2) & 0x1ff
         return hex((b2 << 18) + (b1 << 9) + b3)
 
+class nbit_str_data_type(data_type_t):
+    ASM_KEYWORD = ".str"
+    def __init__(self):
+        data_type_t.__init__(self,
+                             name = "py_str",
+                             hotkey = ',',
+                             value_size = 1,
+                             menu_name = "String (9bits)",
+                             asm_keyword = nbit_str_data_type.ASM_KEYWORD)
+
+    def calc_item_size(self, ea, maxsize):
+        r = 0
+        while True:
+            c = idaapi.get_full_byte(ea + r) & 0x1ff
+            if c == 0 or c < 0x20 or c > 0x7f:
+                break
+            r += 1
+
+        return r + 1
+
+class nbit_str_data_format(data_format_t):
+    def __init__(self):
+        data_format_t.__init__(self,
+                               name = "py_str_format",
+                               menu_name = "String (9bits)")
+
+    def printf(self, value, current_ea, operand_num, dtid):
+        r = ''
+        for i in xrange(len(value) - 1):
+            r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
+        return '"%s", 0' % (r)
+
 def init_data_format():
     new_format = [
-            (tribyte_data_type(), tribyte_data_format())
+            (tribyte_data_type(), tribyte_data_format()),
+            (nbit_str_data_type(), nbit_str_data_format()),
             ]
     register_data_types_and_formats(new_format)
 
