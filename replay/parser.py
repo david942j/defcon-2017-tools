@@ -56,9 +56,11 @@ def parse(fname):
     if not os.path.exists('json'):
         os.mkdir('json')
     cwd = os.getcwd()+'/'
+    d = {'1234':'prob1','38522':'prob1','5566':'prob1'}
     for prob_id,arr in streams.iteritems():
         path = os.path.join('stream', prob_id)
         path2 = os.path.join('json', 'todo')
+        path2 = os.path.join(d[prob_id], path2)
         if not os.path.exists(path):
             os.mkdir(path)
         if not os.path.exists(path2):
