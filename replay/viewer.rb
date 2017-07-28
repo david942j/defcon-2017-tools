@@ -26,9 +26,9 @@ arr.each do |i|
   data = i['data']
   next if data.empty?
   if id == 0
-    puts 'Sent 0x' + data.size.to_s(16) + ' bytes: '
+    $stdout.puts "\e[1;33mSent 0x" + data.size.to_s(16) + ' bytes: '
   else
-    puts 'Received 0x' + data.size.to_s(16) + ' bytes: '
+    $stdout.puts "\e[0;38mReceived 0x" + data.size.to_s(16) + ' bytes: '
   end
   xs = data.unpack('m')[0].unpack('B*')[0]
   xs = from9(data.unpack('m')[0])
@@ -37,14 +37,12 @@ arr.each do |i|
     .each_with_index do |arr, i|
     $stdout.write('  %07x:' % (BPL * i))
     arr.each do |c|
-      $stdout.write("\e[1;30m") unless c.between?(32, 127)
       $stdout.write(' %03x' % c)
-      $stdout.write("\e[0m") unless c.between?(32, 127)
     end
     $stdout.write(' ' * (15 - arr.size) * 4)
     $stdout.write '|'
-    arr.each { |c| $stdout.write(c.between?(32, 127) ? c.chr : "\e[1;30m.\e[0m") }
+    arr.each { |c| $stdout.write(c.between?(32, 127) ? c.chr : ".") }
     $stdout.puts '|'
   end
-  $stdout.puts ''
+  $stdout.puts "\e[0m"
 end
