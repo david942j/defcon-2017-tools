@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+$stdout.sync = true
+
 require 'shellwords'
 
 def to9(xs)
@@ -42,10 +44,10 @@ begin
   loop do
     rs, _, _ = IO.select([prog, $stdin])
     if rs.include?(prog)
-      s = prog.readpartial(4096)
+      s = prog.readpartial(4095) # 4095 % 9 == 0
       xs = from9(s)
       if xs.max >= 256
-        $stdout.puts "WTF decoded output has byte >= 256...?! (#{xs.inspect})"
+        $stdout.puts "\e[1;34msome bytes >= 256: #{xs.inspect}\e[0m"
       end
       $stdout.write xs.pack('C*')
     end

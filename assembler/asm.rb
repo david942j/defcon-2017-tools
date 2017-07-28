@@ -39,6 +39,10 @@ def is_label(s)
   !!(s =~ /^@\w+:$/) # no Regexp#match? in ruby 2.3 :(
 end
 
+def is_data(s)
+  !!(s =~ /^!data\b/)
+end
+
 HANDLER = {}
 data = JSON.parse(DATA.read)
 data.each do |inst|
@@ -195,6 +199,18 @@ def asm_one(inst, line)
   code
 end
 
+def build_data(s)
+  fail unless is_data(s)
+  code = s.split(nil, 2)[1]
+  fail "line #{$line_no}: empty data QQ" if code.empty?
+  eval("[#{code}]")
+    .flatten
+    .flat_map{|x| x.is_a?(String) ? x.bytes : x}
+    .each{|x| fail "line #{$line_no}: #{x} does not fit into a single byte" if x < 0 || x >= 2 ** 9}
+    .map{|x| '%09b' % x}
+    .join
+end
+
 def asm(s, start_line_no = 1)
   labels = {}
   pos = 0
@@ -207,6 +223,11 @@ def asm(s, start_line_no = 1)
       lab = line[0...-1]
       fail "line #{$line_no}: duplicate label #{lab}" if labels.include?(lab)
       labels[lab] = pos
+      next
+    end
+
+    if is_data(line)
+      pos += build_data(line).size
       next
     end
 
@@ -224,18 +245,22 @@ def asm(s, start_line_no = 1)
     line = line.strip
     next if is_comment(line) || is_label(line)
 
-    key = line.split[0]
-    inst = HANDLER[key]
-    fail "line #{$line_no}: unknown instruction #{key}" unless inst
-    rel = inst['args'].any?{|x| x['value'] == 'Offset'}
-    line = line.gsub(/@\w+/) do |lab|
-      fail "line #{$line_no}: undefined label #{lab}" unless labels.include?(lab)
-      lab_pos = labels.fetch(lab)
-      val = rel ? lab_pos - pos : lab_pos
-      fail unless val % 9 == 0
-      val / 9
+    if is_data(line)
+      now = build_data(line)
+    else
+      key = line.split[0]
+      inst = HANDLER[key]
+      fail "line #{$line_no}: unknown instruction #{key}" unless inst
+      rel = inst['args'].any?{|x| x['value'] == 'Offset'}
+      line = line.gsub(/@\w+/) do |lab|
+        fail "line #{$line_no}: undefined label #{lab}" unless labels.include?(lab)
+        lab_pos = labels.fetch(lab)
+        val = rel ? lab_pos - pos : lab_pos
+        fail unless val % 9 == 0
+        val / 9
+      end
+      now = endian(asm_one(inst, line))
     end
-    now = endian(asm_one(inst, line))
     code << now
     pos += now.size
   end
@@ -248,7 +273,7 @@ def test(s)
   s.each_line.with_index(1) do |line, no|
     $line_no = no
     next if is_comment(line)
-    ans, line = line.split(' ', 2)
+    ans, line = line.split(nil, 2)
     key = line.split[0]
     inst = HANDLER[key]
     fail "line #{$line_no}: unknown instruction #{key}" unless inst
@@ -277,11 +302,17 @@ else
   out_path = ARGV.shift
   if out_path.nil?
     if $stdout.isatty
-      out_path = in_path.gsub(/\.[^.]*|$/, '.bin')
+      out_path = in_path.sub(/(\.[^.]*|)$/, '.bin')
       puts "No output path is given, assume #{out_path}"
     else
       out_path = "/dev/stdout"
     end
+  end
+  begin
+    code = asm(s)
+  rescue RuntimeError => e
+    puts "\e[1;31m#{e}\e[0m"
+    exit 1
   end
   IO.binwrite(out_path, asm(s))
 end
