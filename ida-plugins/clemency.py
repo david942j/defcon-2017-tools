@@ -457,9 +457,6 @@ class CLEMENCY(processor_t):
             ]
 
     def out(self):
-        if self.cmd.ea == 0x5eef:
-            print self.cmd.auxpref
-
         buf = idaapi.init_output_buffer(1024)
 
         postfix = ''
