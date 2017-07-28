@@ -30,6 +30,46 @@ def fetch(code, n):
 ########################################
 # Processor Type
 ########################################
+
+def ana_ops(self, ops):
+    inst = self.itable[self.cmd.itype]
+    print inst.name, inst.args
+    opcnt = 0
+    for w, v in inst.args:
+        if v[0] == 'r':
+	    self.cmd[opcnt].type = o_reg
+            self.cmd[opcnt].dtype = dt_dword
+            self.cmd[opcnt].reg = ops[opcnt]
+        elif v[0] == 'I':
+	    self.cmd[opcnt].type = o_imm
+            self.cmd[opcnt].dtype = dt_dword
+            self.cmd[opcnt].value = ops[opcnt]
+        elif v[0] == 'L' or v[0] == 'O':
+	    self.cmd[opcnt].type = o_near
+            self.cmd[opcnt].dtype = dt_dword
+            self.cmd[opcnt].addr = ops[opcnt]
+        elif v[0] == 'R':
+	    self.cmd[opcnt - 1].type = o_displ
+            self.cmd[opcnt - 1].dtype = dt_dword
+            self.cmd[opcnt - 1].specval = ops[opcnt]
+            self.cmd[opcnt - 1].phrase = ops[opcnt - 1]
+            self.cmd[opcnt - 1].addr = ops[opcnt + 2]
+        elif v[0] == 'A':
+            self.cmd.auxpref |= (ops[opcnt] & 3) << 5
+        elif v[0] == 'U':
+            self.cmd.auxpref |= (ops[opcnt] & 0xF)
+        elif v == 'Memory Flags':
+	    self.cmd[opcnt - 1].type = o_idpspec0
+            self.cmd[opcnt - 1].dtype = dt_dword
+            self.cmd[opcnt - 1].specval = ops[opcnt]
+        elif v == 'Memory Offset':
+            pass
+        else:
+            continue
+        opcnt += 1
+    print self.cmd
+
+
 def ana(self):
     cmd = self.cmd
     current_ea = cmd.ea + cmd.size
@@ -49,6 +89,7 @@ def ana(self):
             break
     if idx is None:
         return 0
+    ana_ops(self, map(lambda x: (code2 & x[0]) >> x[1], ops))
     bytelen = bitlen // 9
     cmd.size += bytelen
     return bytelen
