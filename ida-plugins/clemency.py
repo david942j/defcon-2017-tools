@@ -10,6 +10,11 @@ from clemency_inst import inst_json
 def is_bit_string(strg, search=re.compile(r'[^01]').search):
     return not bool(search(strg))
 
+def SIGNEXT(x, b):
+  m = 1 << (b - 1)
+  x = x & ((1 << b) - 1)
+  return (x ^ m) - m
+
 def fetch(code, n):
     byte1 = (code >> (54 - 9 * 1)) & 0x1ff
     byte2 = (code >> (54 - 9 * 2)) & 0x1ff
@@ -114,19 +119,56 @@ def ana(self):
     if idx is None:
         return 0
     ana_ops(self, map(lambda x: (code2 & x[0]) >> x[1], ops))
+
+
+    if cmd.itype == self.itype_MH and cmd.ea >= 3:
+        code_bit = ''
+        last_ea = cmd.ea - 3
+        code_bit = '{:09b}{:09b}{:09b}'.format(get_full_byte(last_ea+1) & 0x1ff, get_full_byte(last_ea) & 0x1ff, get_full_byte(last_ea+2) & 0x1ff)
+        code = int(code_bit, 2)
+        if (code >> 22) & 0x1f == 0x12:
+            regidx = (code >> 17) & 0x1f
+            lo = code & 0x1ffff
+
+            if regidx == cmd[0].reg:
+                hi = cmd[1].value
+                v = (hi << 10) | (lo & 0x3ff)
+                cmd[1].value = v
+                cmd.itype = self.itype_MEH
+
     bytelen = bitlen // 9
     cmd.size += bytelen
     return bytelen
+
+def add_stkpnt(self, pfn, v):
+    if pfn:
+        end = self.cmd.ea + self.cmd.size
+        if not is_fixed_spd(end):
+            add_auto_stkpnt2(pfn, end, v)
+            print hex(end), v
+
+def trace_sp(self):
+    cmd = self.cmd
+    pfn = get_func(cmd.ea)
+    if not pfn:
+        return
+    if cmd.Op1.type == o_reg and cmd.Op1.reg == self.ireg_ST:
+        if cmd.Op2.type == o_reg and cmd.Op2.reg == self.ireg_ST:
+            if cmd.itype == self.itype_SBI:
+                add_stkpnt(self, pfn, -SIGNEXT(cmd.Op3.value, 7))
+            elif cmd.itype == self.itype_ADI:
+                add_stkpnt(self, pfn, SIGNEXT(cmd.Op3.value, 7))
 
 def emu(self):
     cmd = self.cmd
     aux = self.get_auxpref()
 
+    flow = False
     if cmd.itype in [self.itype_B, self.itype_BR, self.itype_BRA, self.itype_BRR]:
         if cmd.itype != self.itype_BR:
             ua_add_cref(0, calc_jump_addr(self, cmd.Op1), fl_JN)
         if cmd.itype not in [self.itype_B, self.itype_BR] or (aux & 0xF) != 0xF:
-            ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+            flow = True
     elif cmd.itype in [self.itype_C, self.itype_CR, self.itype_CAR, self.itype_CAA]:
         if cmd.itype != self.itype_CR:
             ua_add_cref(cmd.Op1.offb, calc_jump_addr(self, cmd.Op1), fl_CN)
@@ -134,7 +176,16 @@ def emu(self):
     elif cmd.itype in [self.itype_RE, self.itype_HT]:
         pass
     else:
+        flow = True
+
+    if flow:
         ua_add_cref(0, cmd.ea + cmd.size, fl_F)
+
+    #if may_trace_sp():
+    #    if flow:
+    #        trace_sp(self)
+    #    else:
+    #        recalc_spd(self.cmd.ea)
 
     return True
 
@@ -238,7 +289,7 @@ class CLEMENCY(processor_t):
     psnames = ["clemency"]
     # long processor names (NULL terminated)
     # No restriction on name lengthes.
-    plnames = ["cLemency"]
+    plnames = ["cLEMENCy"]
 
     segreg_size = 0
 
@@ -316,10 +367,11 @@ class CLEMENCY(processor_t):
 
     def _init_instructions(self):
         class idef:
-            def __init__(self, name, cmt, fmt, args):
+            def __init__(self, name, cmt, fmt, cf, args):
                 self.name = name
                 self.cmt = cmt
                 self.fmt = fmt
+                self.cf = cf
                 self.args = args
 
         self.itable = {}
@@ -332,7 +384,7 @@ class CLEMENCY(processor_t):
                 args.append((a['width'], a['value']))
 
             # Set itable entry for instruction #j
-            self.itable[j] = idef(i['name'], i['desc'], i['format'], args)
+            self.itable[j] = idef(i['name'], i['desc'], i['format'], i['feature'], args)
 
             # Generate matching table entry
             ws = sum([w for w, v in args])
@@ -359,11 +411,15 @@ class CLEMENCY(processor_t):
         Instructions = []
         for j in range(len(self.itable)):
             x = self.itable[j]
-            d = dict(name = x.name.lower(), feature=0)
+            d = dict(name = x.name.lower(), feature=x.cf)
             if x.cmt:
                 d['cmt'] = x.cmt
             Instructions.append(d)
             setattr(self, 'itype_' + x.name, j)
+
+        d = dict(name = 'meh', feature=0)
+        setattr(self, 'itype_MEH', len(Instructions))
+        Instructions.append(d)
 
         self.instruc_end = len(Instructions) + 1
         self.instruc = Instructions
@@ -475,9 +531,42 @@ class tribyte_data_format(data_format_t):
         b3 = idaapi.get_full_byte(current_ea+2) & 0x1ff
         return hex((b2 << 18) + (b1 << 9) + b3)
 
+class nbit_str_data_type(data_type_t):
+    ASM_KEYWORD = ".str"
+    def __init__(self):
+        data_type_t.__init__(self,
+                             name = "py_str",
+                             hotkey = ',',
+                             value_size = 1,
+                             menu_name = "String (9bits)",
+                             asm_keyword = nbit_str_data_type.ASM_KEYWORD)
+
+    def calc_item_size(self, ea, maxsize):
+        r = 0
+        while True:
+            c = idaapi.get_full_byte(ea + r) & 0x1ff
+            if c == 0 or c < 0x20 or c > 0x7f:
+                break
+            r += 1
+
+        return r + 1
+
+class nbit_str_data_format(data_format_t):
+    def __init__(self):
+        data_format_t.__init__(self,
+                               name = "py_str_format",
+                               menu_name = "String (9bits)")
+
+    def printf(self, value, current_ea, operand_num, dtid):
+        r = ''
+        for i in xrange(len(value) - 1):
+            r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
+        return '"%s", 0' % (r)
+
 def init_data_format():
     new_format = [
-            (tribyte_data_type(), tribyte_data_format())
+            (tribyte_data_type(), tribyte_data_format()),
+            (nbit_str_data_type(), nbit_str_data_format()),
             ]
     register_data_types_and_formats(new_format)
 
