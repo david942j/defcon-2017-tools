@@ -471,7 +471,7 @@ class CLEMENCY(processor_t):
         # Conditional
         #   e.g., Bge
         cc_idx = self.cmd.auxpref & self.FL_CC
-        if cc_idx != 0:
+        if cc_idx != 0xf:
             idx = self.cmd.auxpref & self.FL_CC
             postfix += self.cc_table[idx]
 
