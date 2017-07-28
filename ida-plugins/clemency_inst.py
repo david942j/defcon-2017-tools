@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import sys
+import idaapi
+from idaapi import *
+
 inst_json = [
   {
     "name": "AD",
@@ -30,7 +34,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "AD rA, rB, rC"
+    "format": "AD rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADC",
@@ -61,7 +66,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADC rA, rB, rC"
+    "format": "ADC rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADCI",
@@ -92,7 +98,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADCI rA, rB, IMM"
+    "format": "ADCI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADCIM",
@@ -123,7 +130,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADCIM rA, rB, IMM"
+    "format": "ADCIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADCM",
@@ -154,7 +162,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADCM rA, rB, rC"
+    "format": "ADCM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADF",
@@ -185,7 +194,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADF rA, rB, rC"
+    "format": "ADF rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADFM",
@@ -216,7 +226,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADFM rA, rB, rC"
+    "format": "ADFM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADI",
@@ -247,7 +258,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADI rA, rB, IMM"
+    "format": "ADI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADIM",
@@ -278,7 +290,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADIM rA, rB, IMM"
+    "format": "ADIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ADM",
@@ -309,7 +322,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ADM rA, rB, rC"
+    "format": "ADM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "AN",
@@ -340,7 +354,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "AN rA, rB, rC"
+    "format": "AN rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ANI",
@@ -371,7 +386,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ANI rA, rB, IMM"
+    "format": "ANI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ANM",
@@ -402,7 +418,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ANM rA, rB, rC"
+    "format": "ANM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "B",
@@ -421,7 +438,8 @@ inst_json = [
         "width": 17
       }
     ],
-    "format": "Bcc Offset"
+    "format": "Bcc Offset",
+    "feature": CF_USE1 | CF_JUMP
   },
   {
     "name": "BF",
@@ -448,7 +466,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "BF rA, rB"
+    "format": "BF rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "BFM",
@@ -475,7 +494,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "BFM rA, rB"
+    "format": "BFM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "BR",
@@ -498,7 +518,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "BRcc rA"
+    "format": "BRcc rA",
+    "feature": CF_USE1 | CF_JUMP
   },
   {
     "name": "BRA",
@@ -513,7 +534,8 @@ inst_json = [
         "width": 27
       }
     ],
-    "format": "BRA Location"
+    "format": "BRA Location",
+    "feature": CF_USE1 | CF_JUMP
   },
   {
     "name": "BRR",
@@ -528,7 +550,8 @@ inst_json = [
         "width": 27
       }
     ],
-    "format": "BRR Offset"
+    "format": "BRR Offset",
+    "feature": CF_USE1 | CF_JUMP
   },
   {
     "name": "C",
@@ -547,7 +570,8 @@ inst_json = [
         "width": 17
       }
     ],
-    "format": "Ccc Offset"
+    "format": "Ccc Offset",
+    "feature": CF_USE1 | CF_CALL
   },
   {
     "name": "CAA",
@@ -562,7 +586,8 @@ inst_json = [
         "width": 27
       }
     ],
-    "format": "CAA Location"
+    "format": "CAA Location",
+    "feature": CF_USE1 | CF_CALL
   },
   {
     "name": "CAR",
@@ -577,7 +602,8 @@ inst_json = [
         "width": 27
       }
     ],
-    "format": "CAR Offset"
+    "format": "CAR Offset",
+    "feature": CF_USE1 | CF_CALL
   },
   {
     "name": "CM",
@@ -596,7 +622,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "CM rA, rB"
+    "format": "CM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "CMF",
@@ -615,7 +642,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "CMF rA, rB"
+    "format": "CMF rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "CMFM",
@@ -634,7 +662,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "CMFM rA, rB"
+    "format": "CMFM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "CMI",
@@ -653,7 +682,8 @@ inst_json = [
         "width": 14
       }
     ],
-    "format": "CMI rA, IMM"
+    "format": "CMI rA, IMM",
+    "feature": CF_USE1 | CF_USE2
   },
   {
     "name": "CMIM",
@@ -672,7 +702,8 @@ inst_json = [
         "width": 14
       }
     ],
-    "format": "CMIM rA, IMM"
+    "format": "CMIM rA, IMM",
+    "feature": CF_USE1 | CF_USE2
   },
   {
     "name": "CMM",
@@ -691,7 +722,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "CMM rA, rB"
+    "format": "CMM rA, rB",
+    "feature": CF_USE1 | CF_USE2
   },
   {
     "name": "CR",
@@ -714,7 +746,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "CRcc rA"
+    "format": "CRcc rA",
+    "feature": CF_USE1 | CF_CALL
   },
   {
     "name": "DBRK",
@@ -725,7 +758,8 @@ inst_json = [
         "width": 18
       }
     ],
-    "format": "DBRK"
+    "format": "DBRK",
+    "feature": CF_STOP,
   },
   {
     "name": "DI",
@@ -744,7 +778,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DI rA"
+    "format": "DI rA",
+    "feature": CF_USE1
   },
   {
     "name": "DMT",
@@ -771,7 +806,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "DMT rA, rB, rC"
+    "format": "DMT rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DV",
@@ -802,7 +838,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DV rA, rB, rC"
+    "format": "DV rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVF",
@@ -833,7 +870,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVF rA, rB, rC"
+    "format": "DVF rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVFM",
@@ -864,7 +902,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVFM rA, rB, rC"
+    "format": "DVFM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVI",
@@ -895,7 +934,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVI rA, rB, IMM"
+    "format": "DVI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVIM",
@@ -926,7 +966,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVIM rA, rB, IMM"
+    "format": "DVIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVIS",
@@ -957,7 +998,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVIS rA, rB, IMM"
+    "format": "DVIS rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVISM",
@@ -988,7 +1030,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVISM rA, rB, IMM"
+    "format": "DVISM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVM",
@@ -1019,7 +1062,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVM rA, rB, rC"
+    "format": "DVM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVS",
@@ -1050,7 +1094,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVS rA, rB, rC"
+    "format": "DVS rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "DVSM",
@@ -1081,7 +1126,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "DVSM rA, rB, rC"
+    "format": "DVSM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "EI",
@@ -1100,7 +1146,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "EI rA"
+    "format": "EI rA",
+    "feature": CF_USE1
   },
   {
     "name": "FTI",
@@ -1123,7 +1170,8 @@ inst_json = [
         "width": 8
       }
     ],
-    "format": "FTI rA, rB"
+    "format": "FTI rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "FTIM",
@@ -1146,7 +1194,8 @@ inst_json = [
         "width": 8
       }
     ],
-    "format": "FTIM rA, rB"
+    "format": "FTIM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "HT",
@@ -1157,7 +1206,8 @@ inst_json = [
         "width": 18
       }
     ],
-    "format": "HT"
+    "format": "HT",
+    "feature": CF_STOP
   },
   {
     "name": "IR",
@@ -1168,7 +1218,8 @@ inst_json = [
         "width": 18
       }
     ],
-    "format": "IR"
+    "format": "IR",
+    "feature": CF_STOP
   },
   {
     "name": "ITF",
@@ -1191,7 +1242,8 @@ inst_json = [
         "width": 8
       }
     ],
-    "format": "ITF rA, rB"
+    "format": "ITF rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "ITFM",
@@ -1214,7 +1266,8 @@ inst_json = [
         "width": 8
       }
     ],
-    "format": "ITFM rA, rB"
+    "format": "ITFM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "LDS",
@@ -1249,7 +1302,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "LDSm rA, [rB + Offset, RegCount]"
+    "format": "LDSm rA, [rB + Offset, RegCount]",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "LDT",
@@ -1284,7 +1338,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "LDTm rA, [rB + Offset, RegCount]"
+    "format": "LDTm rA, [rB + Offset, RegCount]",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "LDW",
@@ -1319,7 +1374,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "LDWm rA, [rB + Offset, RegCount]"
+    "format": "LDWm rA, [rB + Offset, RegCount]",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "MD",
@@ -1350,7 +1406,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MD rA, rB, rC"
+    "format": "MD rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDF",
@@ -1381,7 +1438,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDF rA, rB, rC"
+    "format": "MDF rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDFM",
@@ -1412,7 +1470,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDFM rA, rB, rC"
+    "format": "MDFM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDI",
@@ -1443,7 +1502,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDI rA, rB, IMM"
+    "format": "MDI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDIM",
@@ -1474,7 +1534,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDIM rA, rB, IMM"
+    "format": "MDIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDIS",
@@ -1505,7 +1566,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDIS rA, rB, IMM"
+    "format": "MDIS rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDISM",
@@ -1536,7 +1598,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDISM rA, rB, IMM"
+    "format": "MDISM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDM",
@@ -1567,7 +1630,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDM rA, rB, rC"
+    "format": "MDM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDS",
@@ -1598,7 +1662,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDS rA, rB, rC"
+    "format": "MDS rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MDSM",
@@ -1629,7 +1694,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MDSM rA, rB, rC"
+    "format": "MDSM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MH",
@@ -1648,7 +1714,8 @@ inst_json = [
         "width": 17
       }
     ],
-    "format": "MH rA, IMM"
+    "format": "MH rA, IMM",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "ML",
@@ -1667,7 +1734,8 @@ inst_json = [
         "width": 17
       }
     ],
-    "format": "ML rA, IMM"
+    "format": "ML rA, IMM",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "MS",
@@ -1686,7 +1754,8 @@ inst_json = [
         "width": 17
       }
     ],
-    "format": "MS rA, IMM"
+    "format": "MS rA, IMM",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "MU",
@@ -1717,7 +1786,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MU rA, rB, rC"
+    "format": "MU rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUF",
@@ -1748,7 +1818,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUF rA, rB, rC"
+    "format": "MUF rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUFM",
@@ -1779,7 +1850,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUFM rA, rB, rC"
+    "format": "MUFM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUI",
@@ -1810,7 +1882,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUI rA, rB, IMM"
+    "format": "MUI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUIM",
@@ -1841,7 +1914,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUIM rA, rB, IMM"
+    "format": "MUIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUIS",
@@ -1872,7 +1946,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUIS rA, rB, IMM"
+    "format": "MUIS rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUISM",
@@ -1903,7 +1978,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUISM rA, rB, IMM"
+    "format": "MUISM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUM",
@@ -1934,7 +2010,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUM rA, rB, rC"
+    "format": "MUM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUS",
@@ -1965,7 +2042,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUS rA, rB, rC"
+    "format": "MUS rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "MUSM",
@@ -1996,7 +2074,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "MUSM rA, rB, rC"
+    "format": "MUSM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "NG",
@@ -2023,7 +2102,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NG rA, rB"
+    "format": "NG rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "NGF",
@@ -2050,7 +2130,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NGF rA, rB"
+    "format": "NGF rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "NGFM",
@@ -2077,7 +2158,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NGFM rA, rB"
+    "format": "NGFM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "NGM",
@@ -2104,7 +2186,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NGM rA, rB"
+    "format": "NGM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "NT",
@@ -2131,7 +2214,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NT rA, rB"
+    "format": "NT rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "NTM",
@@ -2158,7 +2242,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "NTM rA, rB"
+    "format": "NTM rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "OR",
@@ -2189,7 +2274,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "OR rA, rB, rC"
+    "format": "OR rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ORI",
@@ -2220,7 +2306,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ORI rA, rB, IMM"
+    "format": "ORI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ORM",
@@ -2251,7 +2338,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "ORM rA, rB, rC"
+    "format": "ORM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RE",
@@ -2262,7 +2350,8 @@ inst_json = [
         "width": 18
       }
     ],
-    "format": "RE"
+    "format": "RE",
+    "feature": CF_STOP
   },
   {
     "name": "RF",
@@ -2281,7 +2370,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RF rA"
+    "format": "RF rA",
+    "feature": CF_CHG1
   },
   {
     "name": "RL",
@@ -2312,7 +2402,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RL rA, rB, rC"
+    "format": "RL rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RLI",
@@ -2343,7 +2434,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RLI rA, rB, IMM"
+    "format": "RLI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RLIM",
@@ -2374,7 +2466,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RLIM rA, rB, IMM"
+    "format": "RLIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RLM",
@@ -2405,7 +2498,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RLM rA, rB, rC"
+    "format": "RLM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RMP",
@@ -2428,7 +2522,8 @@ inst_json = [
         "width": 10
       }
     ],
-    "format": "RMP rA, rB"
+    "format": "RMP rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "RND",
@@ -2451,7 +2546,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RND rA"
+    "format": "RND rA",
+    "feature": CF_CHG1
   },
   {
     "name": "RNDM",
@@ -2474,7 +2570,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RNDM rA"
+    "format": "RNDM rA",
+    "feature": CF_CHG1
   },
   {
     "name": "RR",
@@ -2505,7 +2602,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RR rA, rB, rC"
+    "format": "RR rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RRI",
@@ -2536,7 +2634,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RRI rA, rB, IMM"
+    "format": "RRI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RRIM",
@@ -2567,7 +2666,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RRIM rA, rB, rC"
+    "format": "RRIM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "RRM",
@@ -2598,7 +2698,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "RRM rA, rB, rC"
+    "format": "RRM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SA",
@@ -2629,7 +2730,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SA rA, rB, rC"
+    "format": "SA rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SAI",
@@ -2660,7 +2762,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SAI rA, rB, IMM"
+    "format": "SAI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SAIM",
@@ -2691,7 +2794,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SAIM rA, rB, IMM"
+    "format": "SAIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SAM",
@@ -2722,7 +2826,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SAM rA, rB, rC"
+    "format": "SAM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SB",
@@ -2753,7 +2858,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SB rA, rB, rC"
+    "format": "SB rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBC",
@@ -2784,7 +2890,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBC rA, rB, rC"
+    "format": "SBC rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBCI",
@@ -2815,7 +2922,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBCI rA, rB, IMM"
+    "format": "SBCI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBCIM",
@@ -2846,7 +2954,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBCIM rA, rB, IMM"
+    "format": "SBCIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBCM",
@@ -2877,7 +2986,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBCM rA, rB, rC"
+    "format": "SBCM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBF",
@@ -2908,7 +3018,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBF rA, rB, rC"
+    "format": "SBF rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBFM",
@@ -2939,7 +3050,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBFM rA, rB, rC"
+    "format": "SBFM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBI",
@@ -2970,7 +3082,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBI rA, rB, IMM"
+    "format": "SBI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBIM",
@@ -3001,7 +3114,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBIM rA, rB, IMM"
+    "format": "SBIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SBM",
@@ -3032,7 +3146,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SBM rA, rB, rC"
+    "format": "SBM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SES",
@@ -3055,7 +3170,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "SES rA, rB"
+    "format": "SES rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "SEW",
@@ -3078,7 +3194,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "SEW rA, rB"
+    "format": "SEW rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "SF",
@@ -3097,7 +3214,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SF rA"
+    "format": "SF rA",
+    "feature": CF_USE1
   },
   {
     "name": "SL",
@@ -3128,7 +3246,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SL rA, rB, rC"
+    "format": "SL rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SLI",
@@ -3159,7 +3278,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SLI rA, rB, IMM"
+    "format": "SLI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SLIM",
@@ -3190,7 +3310,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SLIM rA, rB, IMM"
+    "format": "SLIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SLM",
@@ -3221,7 +3342,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SLM rA, rB, rC"
+    "format": "SLM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SMP",
@@ -3252,7 +3374,8 @@ inst_json = [
         "width": 7
       }
     ],
-    "format": "SMP rA, rB, FLAGS"
+    "format": "SMP rA, rB, FLAGS",
+    "feature": CF_USE1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SR",
@@ -3283,7 +3406,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SR rA, rB, rC"
+    "format": "SR rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SRI",
@@ -3314,7 +3438,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SRI rA, rB, IMM"
+    "format": "SRI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SRIM",
@@ -3345,7 +3470,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SRIM rA, rB, IMM"
+    "format": "SRIM rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "SRM",
@@ -3376,7 +3502,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "SRM rA, rB, rC"
+    "format": "SRM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "STS",
@@ -3411,7 +3538,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "STSm rA, [rB + Offset, RegCount]"
+    "format": "STSm rA, [rB + Offset, RegCount]",
+    "feature": CF_USE1 | CF_CHG2
   },
   {
     "name": "STT",
@@ -3446,7 +3574,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "STTm rA, [rB + Offset, RegCount]"
+    "format": "STTm rA, [rB + Offset, RegCount]",
+    "feature": CF_USE1 | CF_CHG2
   },
   {
     "name": "STW",
@@ -3481,7 +3610,8 @@ inst_json = [
         "width": 3
       }
     ],
-    "format": "STWm rA, [rB + Offset, RegCount]"
+    "format": "STWm rA, [rB + Offset, RegCount]",
+    "feature": CF_USE1 | CF_CHG2
   },
   {
     "name": "WT",
@@ -3492,7 +3622,8 @@ inst_json = [
         "width": 18
       }
     ],
-    "format": "WT"
+    "format": "WT",
+    "feature": CF_STOP
   },
   {
     "name": "XR",
@@ -3523,7 +3654,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "XR rA, rB, rC"
+    "format": "XR rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "XRI",
@@ -3554,7 +3686,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "XRI rA, rB, IMM"
+    "format": "XRI rA, rB, IMM",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "XRM",
@@ -3585,7 +3718,8 @@ inst_json = [
         "width": 1
       }
     ],
-    "format": "XRM rA, rB, rC"
+    "format": "XRM rA, rB, rC",
+    "feature": CF_CHG1 | CF_USE2 | CF_USE3
   },
   {
     "name": "ZES",
@@ -3608,7 +3742,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "ZES rA, rB"
+    "format": "ZES rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   },
   {
     "name": "ZEW",
@@ -3631,107 +3766,8 @@ inst_json = [
         "width": 5
       }
     ],
-    "format": "ZEW rA, rB"
+    "format": "ZEW rA, rB",
+    "feature": CF_CHG1 | CF_USE2
   }
 ]
 
-'''
-class A:
-    def _init_instructions(self):
-        class idef:
-            def __init__(self, name, cmt, fmt, args):
-                self.name = name
-                self.cmt = cmt
-                self.fmt = fmt
-                self.args = args
-
-        self.itable = {}
-        self.imatch = {}
-
-        for j in range(len(inst_json)):
-            i = inst_json[j]
-            args = []
-            for a in i['args']:
-                args.append((a['width'], a['value']))
-
-            # Set itable entry for instruction #j
-            self.itable[j] = idef(i['name'], i['desc'], i['format'], args)
-
-            # Generate matching table entry
-            ws = sum([w for w, v in args])
-            off = 0
-            masks = []
-            vals = []
-            for w, v in args:
-                if v[0] in '01':
-                    masks.append(((1 << (ws - off)) - (1 << (ws - off - w)), ws - off - w))
-                    vals.append(int(v, 2))
-                off += w
-            grp = (ws, tuple(masks))
-            vals = tuple(vals)
-            if grp not in self.imatch:
-                ops = []
-                off = 0
-                for w, v in args:
-                    if v[0] not in '01':
-                        ops.append(((1 << (ws - off)) - (1 << (ws - off - w)), ws - off - w))
-                    off += w
-                self.imatch[grp] = (tuple(ops), {}) # (operand mask, inst match table)
-            self.imatch[grp][1][vals] = j
-
-        Instructions = []
-        for j in range(len(self.itable)):
-            x = self.itable[j]
-            d = dict(name = x.name, feature=0)
-            if x.cmt:
-                d['cmt'] = x.cmt
-            Instructions.append(d)
-            setattr(self, 'itype_' + x.name, j)
-
-        self.instruc_end = len(Instructions) + 1
-        self.instruc = Instructions
-        self.icode_return = self.itype_RE
-
-    def fetch(self, code, n):
-        byte1 = (code >> (54 - 9 * 1)) & 0x1ff
-        byte2 = (code >> (54 - 9 * 2)) & 0x1ff
-        byte3 = (code >> (54 - 9 * 3)) & 0x1ff
-        byte4 = (code >> (54 - 9 * 4)) & 0x1ff
-        byte5 = (code >> (54 - 9 * 5)) & 0x1ff
-        byte6 = (code >> (54 - 9 * 6)) & 0x1ff
-        if n == 18:
-            return (byte2 << 9) + byte1
-        elif n == 27:
-            return (byte2 << 18) + (byte1 << 9) + byte3
-        elif n == 36:
-            return (byte2 << 27) + (byte1 << 18) + (byte3 << 9) + byte4
-        elif n == 54:
-            return (byte2 << 45) + (byte1 << 36) + (byte3 << 27) + (byte5 << 18) + (byte4 << 9) + byte6
-
-    def ana(self):
-
-        code_bit = ''.join(map(lambda x: '{:09b}'.format(x), [0, 0, 0x20, 0, 0, 2]))
-        code = int(code_bit, 2)
-
-        for g in self.imatch:
-            bitlen, masks = g
-            ops, imap = self.imatch[g]
-            code2 = self.fetch(code, bitlen)
-            bits = tuple(map(lambda x: (code2 & x[0]) >> x[1], masks))
-            print code
-            print code2
-            print bitlen
-            print masks
-            print imap
-            print bits
-            print '{:054b}'.format(code2)
-            print '============================================='
-            if bits in imap:
-                idx = imap[bits]
-                print self.itable[idx].name, self.itable[idx].args
-
-
-a = A()
-a._init_instructions()
-a.ana()
-'''

@@ -316,10 +316,11 @@ class CLEMENCY(processor_t):
 
     def _init_instructions(self):
         class idef:
-            def __init__(self, name, cmt, fmt, args):
+            def __init__(self, name, cmt, fmt, cf, args):
                 self.name = name
                 self.cmt = cmt
                 self.fmt = fmt
+                self.cf = cf
                 self.args = args
 
         self.itable = {}
@@ -332,7 +333,7 @@ class CLEMENCY(processor_t):
                 args.append((a['width'], a['value']))
 
             # Set itable entry for instruction #j
-            self.itable[j] = idef(i['name'], i['desc'], i['format'], args)
+            self.itable[j] = idef(i['name'], i['desc'], i['format'], i['feature'], args)
 
             # Generate matching table entry
             ws = sum([w for w, v in args])
@@ -359,7 +360,7 @@ class CLEMENCY(processor_t):
         Instructions = []
         for j in range(len(self.itable)):
             x = self.itable[j]
-            d = dict(name = x.name.lower(), feature=0)
+            d = dict(name = x.name.lower(), feature=x.cf)
             if x.cmt:
                 d['cmt'] = x.cmt
             Instructions.append(d)
