@@ -27,13 +27,8 @@ def check(fname)
     data = i['data']
     next if data.empty?
     next if id == 0
-    data = from9(data.unpack('m')[0]).map do |i|
-      if i.between?(32, 127)
-        i
-      else
-        0
-      end
-    end
+    data = from9(data.unpack('m')[0])
+      .map { |i| i.between?(32, 127) ? i : 0 }
       .map(&:chr)
       .join
     return true if /[0-9a-zA-Z]{26}/ =~ data
