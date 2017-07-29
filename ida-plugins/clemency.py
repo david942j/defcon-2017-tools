@@ -143,6 +143,10 @@ def ana(self):
                 cmd[1].value = v
                 cmd.itype = self.itype_MEH
 
+    # ms 0x1ffff -> ms -1
+    if cmd.itype == self.itype_MS and (cmd[1].value & 0x10000):
+        cmd[1].value -= 0x20000
+
     bytelen = bitlen // 9
     cmd.size += bytelen
     return bytelen
@@ -226,7 +230,7 @@ def outop(self, op):
             out_symbol('R')
     elif optype == o_imm:
         # take size from x.dtyp
-        OutValue(op, OOFW_32)
+        OutValue(op, OOFW_32 | OOF_SIGNED)
     elif optype == o_near:
         addr = op.addr
         # offset
