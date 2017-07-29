@@ -20,10 +20,9 @@ class PcapParser(object):
         h = defaultdict(list)
         pcap = rdpcap(filename)
         s = pcap.sessions()
-        print len(s)
+        logging.info('Find {} sessions'.format(len(s)))
         for k, v in s.iteritems():
-            print k,v
-            if 'UDP' in k: continue
+            if 'TCP' not in k: continue
             v = sorted(v, key=lambda x: x.time)
             h[v[0].seq+1].append(v)
             if v[0].ack != 0:
@@ -38,7 +37,7 @@ class PcapParser(object):
             d += [ (1, x) for x in v[1] ]
             d = sorted(d, key=lambda x: x[1].time)
             res.append(d)
-        print len(res)
+        logging.info('Find {} streams'.format(len(res))) 
         return res
 
     def get_streams(self):
@@ -46,11 +45,16 @@ class PcapParser(object):
         for i in self.data:
             counter = [0, 0]
             arr = []
+            prob_id = None
             for a,b in i:
                 val = base64.b64encode(str(b[Raw])) if Raw in b else ''
                 arr.append({ 'id': a, 'counter': counter[a], 'timestamp': b.time, 'data': val })
                 counter[a] += 1
-            prob_id = str(i[1][1].getlayer('TCP').sport)
+                if a == 0:
+                    prob_id = str(b.getlayer('TCP').dport)
+            if prob_id == None:
+                continue
+            print prob_id
             res[prob_id].append(arr)
         return res
 
