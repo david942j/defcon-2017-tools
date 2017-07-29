@@ -7,7 +7,8 @@ while True:
     version = len(files)
     name = glob.glob('bin/'+str(version)+'_*')[0]
     out_dir = 'json/'+str(version)
-    check(name[4:],'json/todo',out_dir)
-    for f in os.listdir('json/todo'):
-        os.remove('json/todo/'+f)
+    fl = os.listdir('json/todo')
+    print len(fl)
+    if fl != 0:
+        check(name[4:],'json/todo',out_dir,True)
     time.sleep(200)

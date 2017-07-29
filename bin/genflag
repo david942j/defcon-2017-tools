@@ -1,0 +1,2 @@
+#!/bin/sh
+LC_ALL=C tr -dc '[:alnum:]' < /dev/urandom | head -c26; echo

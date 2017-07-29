@@ -1,7 +1,8 @@
 rm -r bin
 rm -r json
+rm -r cache
 mkdir  bin
+mkdir  cache
 mkdir json
 mkdir json/todo
 
-python2 new_binary.py hello.bin

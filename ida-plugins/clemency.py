@@ -58,6 +58,7 @@ def ana_ops(self, ops):
     inst = self.itable[self.cmd.itype]
     opcnt = 0
     opidx = 0
+    hascc = False
     for w, v in inst.args:
         if v[0] == '0' or v[0] == '1':
             continue
@@ -81,13 +82,17 @@ def ana_ops(self, ops):
             self.cmd[opcnt - 1].dtype = dt_dword
             self.cmd[opcnt - 1].specval = ops[opidx]
             self.cmd[opcnt - 1].phrase = ops[opidx - 1]
-            self.cmd[opcnt - 1].addr = ops[opidx + 2]
+            offset = ops[opidx + 2]
+            if offset & 0x4000000:
+                offset -= 0x8000000
+            self.cmd[opcnt - 1].value = offset
         elif v == 'Adjust rB':
             self.cmd.auxpref |= ops[opidx] << 5
         elif v == 'UF':
             self.cmd.auxpref |= ops[opidx] << 4
         elif v == 'Condition':
             self.cmd.auxpref |= ops[opidx]
+            hascc = True
         elif v == 'Memory Flags':
             self.cmd[opcnt].type = o_idpspec0
             self.cmd[opcnt].dtype = dt_dword
@@ -98,6 +103,8 @@ def ana_ops(self, ops):
         else:
             assert False
         opidx += 1
+    if not hascc:
+        self.cmd.auxpref |= 0xF
 
 def ana(self):
     cmd = self.cmd
@@ -135,6 +142,10 @@ def ana(self):
                 v = (hi << 10) | (lo & 0x3ff)
                 cmd[1].value = v
                 cmd.itype = self.itype_MEH
+
+    # ms 0x1ffff -> ms -1
+    if cmd.itype == self.itype_MS and (cmd[1].value & 0x10000):
+        cmd[1].value -= 0x20000
 
     bytelen = bitlen // 9
     cmd.size += bytelen
@@ -181,6 +192,16 @@ def emu(self):
     if flow:
         ua_add_cref(0, cmd.ea + cmd.size, fl_F)
 
+    if cmd.itype in [self.itype_MEH]:
+        ua_add_dref(2, cmd[1].value, dr_R)
+        c1 = get_full_byte(cmd[1].value) & 0x1ff
+        c2 = get_full_byte(cmd[1].value+1) & 0x1ff
+        c3 = get_full_byte(cmd[1].value+2) & 0x1ff
+        if c1 >= 0x20 and c1 <= 0x7f \
+                and c2 >= 0x20 and c2 <= 0x7f \
+                and c3 >= 0x20 and c3 <= 0x7f:
+            MakeCustomDataEx(cmd[1].value, 0, self.nstr_dtid, self.nstr_dfid)
+
     #if may_trace_sp():
     #    if flow:
     #        trace_sp(self)
@@ -209,7 +230,7 @@ def outop(self, op):
             out_symbol('R')
     elif optype == o_imm:
         # take size from x.dtyp
-        OutValue(op, OOFW_IMM)
+        OutValue(op, OOFW_32 | OOF_SIGNED)
     elif optype == o_near:
         addr = op.addr
         # offset
@@ -262,10 +283,7 @@ def outop(self, op):
     elif optype == o_displ:
         out_symbol('[')
         out_register(self.regNames[op.phrase])
-        out_symbol(' ')
-        out_symbol('+')
-        out_symbol(' ')
-        OutValue(op, OOF_ADDR)
+        OutValue(op, OOFW_32 | OOFS_NEEDSIGN | OOF_SIGNED)
         out_symbol(',')
         out_symbol(' ')
         OutLine("%d" % (op.specval + 1))
@@ -348,9 +366,20 @@ class CLEMENCY(processor_t):
     module = __import__('clemency')
     def __init__(self):
         processor_t.__init__(self)
+        # new data format
+        self.init_data_format()
+        # reload debug flag
         self.doReload = os.getenv('IDA_RELOAD')
+        # init
         self._init_registers()
         self._init_instructions()
+
+    def init_data_format(self):
+        self.tribyte_dtid = register_custom_data_type(tribyte_data_type())
+        self.tribyte_dfid = register_custom_data_format(self.tribyte_dtid, tribyte_data_format())
+        self.nstr_dtid = register_custom_data_type(nbit_str_data_type())
+        self.nstr_dfid = register_custom_data_format(self.nstr_dtid, nbit_str_data_format())
+
 
     def _init_registers(self):
 
@@ -462,7 +491,7 @@ class CLEMENCY(processor_t):
         postfix = ''
         # Adjust Register
         #   e.g., LDSI, LDSD
-        adjust_flag = self.cmd.auxpref & self.FL_ADJUST
+        adjust_flag = (self.cmd.auxpref & self.FL_ADJUST) >> 5
         if adjust_flag == 1:
             postfix += 'i'
         elif adjust_flag == 2:
@@ -471,7 +500,7 @@ class CLEMENCY(processor_t):
         # Conditional
         #   e.g., Bge
         cc_idx = self.cmd.auxpref & self.FL_CC
-        if cc_idx != 0:
+        if cc_idx != 0xf:
             idx = self.cmd.auxpref & self.FL_CC
             postfix += self.cc_table[idx]
 
@@ -555,7 +584,7 @@ class nbit_str_data_format(data_format_t):
     def __init__(self):
         data_format_t.__init__(self,
                                name = "py_str_format",
-                               menu_name = "String (9bits)")
+                               menu_name = "String (9bits) format")
 
     def printf(self, value, current_ea, operand_num, dtid):
         r = ''
@@ -563,19 +592,10 @@ class nbit_str_data_format(data_format_t):
             r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
         return '"%s", 0' % (r)
 
-def init_data_format():
-    new_format = [
-            (tribyte_data_type(), tribyte_data_format()),
-            (nbit_str_data_type(), nbit_str_data_format()),
-            ]
-    register_data_types_and_formats(new_format)
-
 ########################################
 # Processor Plugin Entry
 ########################################
 def PROCESSOR_ENTRY():
-    # new data format
-    init_data_format()
     # add proc into module path
     script_path = os.path.abspath(__file__)
     script_dir = os.path.dirname(script_path)
