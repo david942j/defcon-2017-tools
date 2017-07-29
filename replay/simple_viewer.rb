@@ -29,16 +29,10 @@ def view(fname, stop)
     data = i['data']
     next if data.empty?
     data = from9(data.unpack('m')[0])
-    tot += data.size
-    if tot >= 10000 and stop
-      puts "Stripted, file #{fname} is more than 10000 bytes."
-      puts "Use `#{__FILE__} #{fname}` to view full information."
-      return
-    end
     if id == 0
-      $stdout.puts "\e[1;33mSent 0x" + data.size.to_s(16) + ' bytes: '
+      $stdout.puts "Sent 0x" + data.size.to_s(16) + ' bytes: '
     else
-      $stdout.puts "\e[0;38mReceived 0x" + data.size.to_s(16) + ' bytes: '
+      $stdout.puts "Received 0x" + data.size.to_s(16) + ' bytes: '
     end
     data
       .each_slice(BPL)
@@ -52,7 +46,7 @@ def view(fname, stop)
       arr.each { |c| $stdout.write(c.between?(32, 127) ? c.chr : ".") }
       $stdout.puts '|'
     end
-    $stdout.puts "\e[0m"
+    $stdout.puts ""
   end
 end
 
@@ -63,8 +57,6 @@ if File.directory?(ARGV[0])
     next if File.directory? f
     view(f,true)
     puts '==============='
-    $stdout.puts 'Press Enter to continue..'
-    $stdin.gets
   end
 elsif File.exists?(ARGV[0])
   view(ARGV[0],false)
