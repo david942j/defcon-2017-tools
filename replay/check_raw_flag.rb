@@ -31,26 +31,30 @@ def check(fname)
       .map { |i| i.between?(32, 127) ? i : 0 }
       .map(&:chr)
       .join
-    return true if /[0-9a-zA-Z]{26}/ =~ data
+    pos = /[0-9a-zA-Z]{26}/ =~ data
+    return data[pos, 26] if pos
   end
-  return false
+  return nil
 end
 
 if File.directory?(ARGV[0])
   d = ARGV[0].dup
   d << '/' if d[-1] != '/'
-  pset = Dir.glob("#{d}**/*")
+  found = false
+  pset = []
+  Dir.glob("#{d}**/*")
     .reject { |f| File.directory? f }
-    .select { |f| check(f) }
-  if pset.empty?
-    puts 'Not found'
-  else
-    puts pset.join("\n")
-  end
+    .each do |f|
+      if s = check(f)
+        puts f,s
+        found = true
+      end
+    end
+  puts 'Not found' unless found
 elsif File.exists?(ARGV[0])
   f = ARGV[0]
-  if check(f)
-    puts f 
+  if s = check(f)
+    puts f,s
   else
     puts 'Not found'
   end
