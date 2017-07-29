@@ -18,4 +18,12 @@ python takebin.py 抓我們更新的patch
 看多份json: `./viewer.rb stram/5566`，當超過 10000 bytes 會停下不繼續印
 `simple_viewer.rb` 用法與 `viewer.rb` 一樣，只是不會截斷以及沒有色碼。
 
+找有沒有可能有赤裸裸的 `flag`:
+```
+看一份json: ./check_raw_flag.rb stream/5566/00ed10cc1a38ac7109b55cbfc0497563.json
+看資料夾下所有檔案:
+./check_raw_flag.rb stream/5566
+./check_raw_flag.rb stream/
+```
+
 新題目要更新parser.py中port和problem的對照表，和utils.py模擬時用的port
