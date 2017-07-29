@@ -574,7 +574,7 @@ class nbit_str_data_type(data_type_t):
         r = 0
         while True:
             c = idaapi.get_full_byte(ea + r) & 0x1ff
-            if c == 0 or c < 0x20 or c > 0x7f:
+            if c == 0:
                 break
             r += 1
 
@@ -590,7 +590,7 @@ class nbit_str_data_format(data_format_t):
         r = ''
         for i in xrange(len(value) - 1):
             r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
-        return '"%s", 0' % (r)
+        return '"%s", 0' % (repr(r))
 
 ########################################
 # Processor Plugin Entry
