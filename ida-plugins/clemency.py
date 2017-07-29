@@ -82,7 +82,10 @@ def ana_ops(self, ops):
             self.cmd[opcnt - 1].dtype = dt_dword
             self.cmd[opcnt - 1].specval = ops[opidx]
             self.cmd[opcnt - 1].phrase = ops[opidx - 1]
-            self.cmd[opcnt - 1].addr = ops[opidx + 2]
+            offset = ops[opidx + 2]
+            if offset & 0x4000000:
+                offset -= 0x8000000
+            self.cmd[opcnt - 1].value = offset
         elif v == 'Adjust rB':
             self.cmd.auxpref |= ops[opidx] << 5
         elif v == 'UF':
@@ -276,10 +279,7 @@ def outop(self, op):
     elif optype == o_displ:
         out_symbol('[')
         out_register(self.regNames[op.phrase])
-        out_symbol(' ')
-        out_symbol('+')
-        out_symbol(' ')
-        OutValue(op, OOF_ADDR)
+        OutValue(op, OOFW_32 | OOFS_NEEDSIGN)
         out_symbol(',')
         out_symbol(' ')
         OutLine("%d" % (op.specval + 1))
