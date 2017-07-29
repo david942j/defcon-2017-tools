@@ -37,29 +37,26 @@ def check(fname)
   return nil
 end
 
-if File.directory?(ARGV[0])
-  d = ARGV[0].dup
-  d << '/' if d[-1] != '/'
-  found = false
-  pset = []
-  Dir.glob("#{d}**/*")
-    .reject { |f| File.directory? f }
-    .each do |f|
+found = false
+ARGV.each do |fname|
+  if File.directory?(fname)
+    d = fname.dup
+    d << '/' if d[-1] != '/'
+    pset = []
+    Dir.glob("#{d}**/*")
+      .reject { |f| File.directory? f }
+      .each do |f|
       if s = check(f)
         puts f,s
         found = true
       end
     end
-  puts 'Not found' unless found
-elsif File.exists?(ARGV[0])
-  f = ARGV[0]
-  if s = check(f)
-    puts f,s
-  else
-    puts 'Not found'
+  elsif File.exists?(fname)
+    if s = check(fname)
+      found = true
+      puts fname,s
+    end
   end
-else
-  puts "#{ARGV[0]} not exists"
-  exit 1
-end
 
+end
+puts 'Not found' unless found 
