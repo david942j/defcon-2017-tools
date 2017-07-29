@@ -54,7 +54,6 @@ class PcapParser(object):
                     prob_id = str(b.getlayer('TCP').dport)
             if prob_id == None:
                 continue
-            print prob_id
             res[prob_id].append(arr)
         return res
 
