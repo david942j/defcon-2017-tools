@@ -283,7 +283,7 @@ def outop(self, op):
     elif optype == o_displ:
         out_symbol('[')
         out_register(self.regNames[op.phrase])
-        OutValue(op, OOFW_32 | OOFS_NEEDSIGN)
+        OutValue(op, OOFW_32 | OOFS_NEEDSIGN | OOF_SIGNED)
         out_symbol(',')
         out_symbol(' ')
         OutLine("%d" % (op.specval + 1))
