@@ -2,9 +2,15 @@ import base64
 import json
 import os
 import hashlib
+import logging
 from scapy.all import *
 from collections import defaultdict
 from multiprocessing import Pool
+
+logging.basicConfig(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'replay_parser.log'),
+                    filemode='a',
+                    level=logging.INFO,
+                    format='%(asctime)s:%(name)s:%(levelname)s: %(message)s')
 
 class PcapParser(object):
     def __init__(self, filename):
@@ -50,39 +56,50 @@ def concat_data(arr):
     return res
 
 def parse(fname):
+    basename = os.path.basename(fname).replace('.pcap', '')
     streams = PcapParser(fname).get_streams()
     if not os.path.exists('stream'):
         os.mkdir('stream')
     cwd = os.getcwd()+'/'
-    d = {'1234':'prob1','38522':'prob1','5566':'prob1'}
+    d = {'1974':'prob1'}
     for prob_id,arr in streams.iteritems():
-        path = os.path.join('stream', prob_id)
-        path2 = os.path.join('json', 'todo')
-        path2 = os.path.join(d[prob_id], path2)
-        if not os.path.exists(path):
-            os.mkdir(path)
-        if not os.path.exists(path2):
-            os.mkdir(path2)
-        for res in arr:
-            data = concat_data(res)
-            md5 = hashlib.md5(data).hexdigest()
-            fname = os.path.join(path, md5 + '.json')
-            if os.path.exists(fname):
-                continue
-            print 'Save Packet Stream:',fname
-            f = file(fname, 'w')
-            json.dump(res, f)
-            fname2 = os.path.join(path2, md5 + '.json')
-            fname = cwd+fname
-            fname2 = cwd+fname2
-            os.symlink(fname,fname2)
-            #f = file(fname, 'w')
-            #json.dump(res, f)
+        if prob_id not in d:
+            continue
+
+        try:
+            path = os.path.join('stream', prob_id)
+            path2 = os.path.join('json', 'todo')
+            path2 = os.path.join(d[prob_id], path2)
+
+            if not os.path.exists(path):
+                os.mkdir(path)
+            if not os.path.exists(path2):
+                os.mkdir(path2)
+            for res in arr:
+                data = concat_data(res)
+                md5 = hashlib.md5(data).hexdigest()
+                outfname = os.path.join(path, basename + '_' + md5 + '.json')
+                if os.path.exists(outfname):
+                    logging.info('Skip %s due to same' % md5)
+                    continue
+                logging.info('Save Packet Stream: %s' % outfname)
+                f = file(outfname, 'w')
+                json.dump(res, f)
+                outfname2 = os.path.join(path2, basename + '_' + md5 + '.json')
+                outfname = cwd+outfname
+                outfname2 = cwd+outfname2
+                os.symlink(outfname,outfname2)
+                #f = file(fname, 'w')
+                #json.dump(res, f)
+        except:
+            logging.warn('Error with %s' % prob_id)
 
 if __name__ == '__main__':
-    fdir = 'pcap'
-    if len(sys.argv) >= 2:
-        fdir = sys.argv[1]
-    flist = [fdir+'/'+name for name in os.listdir(fdir)]
-    p = Pool(10)
-    p.map(parse,flist)
+    try:
+        if len(sys.argv) < 2:
+            print 'no input file'
+            exit(1)
+        logging.info('Parse %s' % sys.argv)
+        parse(sys.argv[1])
+    except:
+        logging.error('Parse %s error' % sys.argv)
