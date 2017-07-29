@@ -13,7 +13,7 @@ def from9(s)
 end
 
 if ARGV.empty?
-  puts "Usage: #{__FILE__} [pcap_stream.json or directory]"
+  puts "Usage: #{__FILE__} [pcap_stream.json or directory]..."
   puts ''
   puts "Example: #{__FILE__} pcap_stream.json"
   puts "Example: #{__FILE__} stream/5566"
@@ -56,19 +56,23 @@ def view(fname, stop)
   end
 end
 
-if File.directory?(ARGV[0])
-  d = ARGV[0].dup
-  d << '/' if d[-1] != '/'
-  Dir.glob("#{d}*").each do |f|
-    next if File.directory? f
-    view(f,true)
+ARGV.each do |fname|
+  if File.directory?(fname)
+    d = fname.dup
+    d << '/' if d[-1] != '/'
+    Dir.glob("#{d}*").each do |f|
+      next if File.directory? f
+      view(f,true)
+      puts '==============='
+      $stdout.puts 'Press Enter to continue..'
+      $stdin.gets
+    end
+  elsif File.exists?(fname)
+    view(fname,false)
     puts '==============='
     $stdout.puts 'Press Enter to continue..'
     $stdin.gets
+  else
+    puts "#{fname} not exists"
   end
-elsif File.exists?(ARGV[0])
-  view(ARGV[0],false)
-else
-  puts "#{ARGV[0]} not exists"
-  exit 1
 end
