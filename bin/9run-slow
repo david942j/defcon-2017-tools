@@ -22,6 +22,10 @@ end
 IO.write('flag', "FLAG{Hi I am fl4g :P}\n") if tmp_flag
 
 port = rand(10000..65000)
-system ['ltrace', '-o', '/tmp/ltrace.log', bin('9emu'), ARGV.shift, '-L', port].shelljoin + ' 1>&2 &'
+env = {
+  'WRITE_DELAY' => ENV['WRITE_DELAY'] || '0.01',
+  'LD_PRELOAD' => File.absolute_path(File.join(File.dirname(__FILE__), '../manual-io/write_delay.so'))
+}
+system env, [bin('9emu'), ARGV.shift, '-L', port].shelljoin + ' 1>&2 &'
 system [bin('9ncat'), port].shelljoin
 
