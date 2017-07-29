@@ -70,7 +70,7 @@ def parse(fname):
     if not os.path.exists('stream'):
         os.mkdir('stream')
     cwd = os.getcwd()+'/'
-    d = {'1974':'prob1', '2525':'prob2', '2001':'prob3'}
+    d = {'1974':'prob1', '2525':'prob2', '2001':'prob3', '80':'prob4'}
     for prob_id,arr in streams.iteritems():
         if prob_id not in d:
             continue
@@ -79,12 +79,13 @@ def parse(fname):
             path = os.path.join('stream', prob_id)
             path2 = os.path.join('json', 'todo')
             path2 = os.path.join(d[prob_id], path2)
-            fset = set([ i.split('_')[-1] for i in os.listdir(path) ])
 
             if not os.path.exists(path):
                 os.mkdir(path)
             if not os.path.exists(path2):
                 os.mkdir(path2)
+
+            fset = set([ i.split('_')[-1] for i in os.listdir(path) ])
             for res in arr:
                 data = concat_data(res)
                 md5 = hashlib.md5(data).hexdigest()
