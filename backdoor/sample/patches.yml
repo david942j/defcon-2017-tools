@@ -1,0 +1,11 @@
+base_address: 0x100000
+mode: append
+
+append:
+  setup_address: 0x3c
+  pages: 8
+
+targets:
+  - backdoor:
+      start: 0x6021
+      asmfile: mh.asm
