@@ -152,7 +152,7 @@ def do_setup(base_address, append_bits, setup_address=0x3c, pages=1):
     # Check appended size
     assert (len(bits) - offset * 9) < pages * 1024 * 9
 
-    payload = mov(20, offset) + ml(26, 1) + smp(20, 26, 3) + bra(patchend)
+    payload = mov(20, offset) + ml(26, pages) + smp(20, 26, 3) + bra(patchend)
     assert oribytelen * 9 >= len(payload)
     # Assume old code is PIE
     bits[setup_bddress:setup_bddress + len(payload)] = payload
@@ -225,7 +225,8 @@ do_hooks(base_address, patches, patch_offsets)
 
 if mode == 'append':
     setup_address = setting['append']['setup_address']
-    patched_bits = bytes(do_setup(base_address, append_bits, setup_address))
+    pages = setting['append'].get('pages', 1)
+    patched_bits = bytes(do_setup(base_address, append_bits, setup_address, pages))
 elif mode == 'inline':
     patched_bits = bytes(do_inline(base_address, append_bits))
 

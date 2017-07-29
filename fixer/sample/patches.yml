@@ -3,6 +3,7 @@ mode: append
 
 append:
   setup_address: 0x3c
+  pages: 1
 
 targets:
   - skip: # patch exit(1)
