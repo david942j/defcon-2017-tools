@@ -10,7 +10,5 @@ while True:
     fl = os.listdir('json/todo')
     print len(fl)
     if fl != 0:
-        check(name[4:],'json/todo',out_dir)
-	for f in os.listdir('json/todo'):
-	    os.remove('json/todo/'+f)
+        check(name[4:],'json/todo',out_dir,True)
     time.sleep(200)
