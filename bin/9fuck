@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require 'shellwords'
+require 'tempfile'
+
+def bin(x)
+  File.join(File.dirname(__FILE__), x)
+end
+
+if ARGV.size < 2
+  puts "Usage: #{File.basename(__FILE__)} ATK_CMD PORT BIN_PATH"
+  puts "Example: #{File.basename(__FILE__)} './atk 127.0.0.1 31337' 31337 /home/hh/defcon/service_binary/15/babysfirst/latest.bin"
+  exit 1
+end
+
+atk_log = Tempfile.new('atklog')
+atk_cmd = ['script', '-q', atk_log.path, '-c', ARGV.shift].shelljoin
+port = ARGV.shift
+bin_path = ARGV.shift
+
+tmp_flag = !File.file?('flag')
+IO.write('flag', "HereIsFl4gHowDoUTurnThisOn\n") if tmp_flag
+
+emu_pid = spawn [bin('9emu'), bin_path, '-L', port].shelljoin
+atk_pid = spawn atk_cmd
+
+trap(:INT) {}
+
+at_exit do
+  File.delete('flag') if tmp_flag
+  atk_log.unlink
+  Process.kill(:KILL, emu_pid) rescue nil
+  Process.kill(:KILL, atk_pid) rescue nil
+end
+
+Process.wait atk_pid
+if IO.read(atk_log.path).include?(IO.read('flag').strip)
+  puts "\e[1;32mOK\e[0m"
+  exit 0
+else
+  puts "\e[1;31mQQ\e[0m"
+  exit 1
+end

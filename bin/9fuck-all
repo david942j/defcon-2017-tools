@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require 'shellwords'
+
+def bin(x)
+  File.join(File.dirname(__FILE__), x)
+end
+
+def log(s)
+  puts "\e[1;34m#{s}\e[0m"
+end
+
+if ARGV.size < 2
+  puts "Usage: #{File.basename(__FILE__)} ATK_CMD PORT SERVICE_NAME [TEAM_IDS...]"
+  exit 1
+end
+
+atk_cmd = ARGV.shift
+port = ARGV.shift
+service = ARGV.shift
+team_ids = ARGV.empty? ? [*1..15] : ARGV.map(&:to_i)
+ok_ids = []
+qq_ids = []
+
+team_ids.each do |team_id|
+  bin_path = "/home/hh/defcon/service_binary/#{team_id}/#{service}/latest.bin"
+  log "team_id   = #{team_id}"
+  log "bin_path  = #{bin_path}"
+  log "real_path = #{File.realpath(bin_path)}"
+  system [bin('9fuck'), atk_cmd, port, bin_path].shelljoin
+  if $? == 0
+    ok_ids << team_id
+  else
+    qq_ids << team_id
+  end
+  log "ok: #{ok_ids}"
+  log "qq: #{qq_ids}"
+  log "---"
+end
