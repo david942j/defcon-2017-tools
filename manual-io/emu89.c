@@ -1,11 +1,26 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 char tmp[1000000];
+char fdmap[10000];
+
+__attribute__((constructor)) static void init() {
+    char *e = getenv("FD");
+    if (e) {
+        memset(fdmap, 0, sizeof(fdmap));
+        char *p = strtok(e, ",");
+        do {
+            fdmap[atoi(p)] = 1;
+        } while (p = strtok(0, ","));
+    } else {
+        memset(fdmap, 1, sizeof(fdmap));
+    }
+}
 
 ssize_t read(int fd, void *buf, size_t count) {
-    if (fd >= 5) {
+    if (fdmap[fd]) {
         int len = syscall(0, fd, tmp, count * 8 / 9);
         int x = 0;
         int l = 0;
@@ -31,7 +46,7 @@ ssize_t read(int fd, void *buf, size_t count) {
 
 
 ssize_t write(int fd, const void *buf, size_t count) {
-    if (fd >= 5) {
+    if (fdmap[fd]) {
         int x = 0;
         int l = 0;
         int j = 0;
