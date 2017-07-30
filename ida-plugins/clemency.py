@@ -574,8 +574,9 @@ class nbit_str_data_type(data_type_t):
         r = 0
         while True:
             c = idaapi.get_full_byte(ea + r) & 0x1ff
-            if c == 0:
-                break
+            if c == 0 or c < 0x20 or c > 0x7f:
+                if c != 0x0d and c != 0x0a and c != 0x09 and c != 0x1b:
+                    break
             r += 1
 
         return r + 1
@@ -589,8 +590,18 @@ class nbit_str_data_format(data_format_t):
     def printf(self, value, current_ea, operand_num, dtid):
         r = ''
         for i in xrange(len(value) - 1):
-            r += chr(idaapi.get_full_byte(current_ea + i) & 0xff)
-        return '"%s", 0' % (repr(r))
+            c = idaapi.get_full_byte(current_ea + i) & 0xff
+            if c == 0x0d:
+                r += '\\r'
+            elif c == 0x0a:
+                r += '\\n'
+            elif c == 0x09:
+                r += '\t'
+            elif c == 0x1b:
+                r += '^['
+            else:
+                r += chr(c)
+        return '"%s", 0' % (r)
 
 ########################################
 # Processor Plugin Entry
