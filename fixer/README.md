@@ -1,3 +1,5 @@
+# Binary Patcher
+
 ```bash
 python2 fixer.py -h
 python2 fixer.py --dir sample --bin sample/hello.bin
