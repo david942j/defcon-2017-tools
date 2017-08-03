@@ -1,5 +1,13 @@
-`/tmp2/clemency-emu mh.bin` 會直接把 flag 加密後噴出來
-過 base64 後給 backdoor_dec 當第一參，backdoor_dec 會噴解密結果至 stdout
+## Files
+* `mh.asm` assembly of flag encryptor. Use fixer to patch it into binaries.
+* `asm_util.rb` helper to generate cLEMENCy assembly.
+* `mh.asm.rb` will genereate `mh.asm`.
+
+## Sample
+`clemency-emu mh.bin` will output the encrypted flag.
+
+Encode it with base64 and feed as argument to `backdoor_dec.rb` will show the decrypted flag.
 ```
-/tmp2/clemency-emu mh.bin | base64 | xargs ./backdoor_dec.rb
+clemency-emu mh.bin | base64 | xargs ./backdoor_dec.rb
+# ABcDeFGHijKlmnopQrstUvwxYZ
 ```
